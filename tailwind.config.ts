@@ -61,6 +61,22 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				study: {
+					purple: 'hsl(var(--study-purple))',
+					'purple-light': 'hsl(var(--study-purple-light))',
+					green: 'hsl(var(--study-green))',
+					'green-light': 'hsl(var(--study-green-light))',
+					orange: 'hsl(var(--study-orange))',
+					'orange-light': 'hsl(var(--study-orange-light))',
+					blue: 'hsl(var(--study-blue))',
+					'blue-light': 'hsl(var(--study-blue-light))',
+					pink: 'hsl(var(--study-pink))',
+					'pink-light': 'hsl(var(--study-pink-light))'
+				},
+				progress: {
+					bg: 'hsl(var(--progress-bg))',
+					green: 'hsl(var(--progress-green))'
 				}
 			},
 			borderRadius: {
