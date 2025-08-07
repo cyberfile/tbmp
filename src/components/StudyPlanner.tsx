@@ -12,6 +12,8 @@ import { TopicManager } from "./TopicManager";
 import { NotificationSettings } from "./NotificationSettings";
 import { PrintableView } from "./PrintableView";
 import { NoteUpload } from "./NoteUpload";
+import { AddTaskModal } from "./AddTaskModal";
+import { EditGoalsModal } from "./EditGoalsModal";
 
 interface Topic {
   id: string;
@@ -102,9 +104,13 @@ export function StudyPlanner() {
   const [showNoteUpload, setShowNoteUpload] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [printViewType, setPrintViewType] = useState<"weekly" | "monthly">("weekly");
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [showEditGoals, setShowEditGoals] = useState(false);
+  const [weeklyGoal, setWeeklyGoal] = useState(35);
+  const [weeklyHours, setWeeklyHours] = useState(28);
 
   const hoursStudiedToday = 4;
-  const totalHoursGoal = 5;
+  const [totalHoursGoal, setTotalHoursGoal] = useState(5);
   const lastQuizResult = 70;
 
   const studyProgress = (hoursStudiedToday / totalHoursGoal) * 100;
@@ -122,6 +128,24 @@ export function StudyPlanner() {
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     setShowNoteUpload(true);
+  };
+
+  const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
+    const task: Task = {
+      ...newTask,
+      id: Date.now().toString(),
+      completed: false,
+    };
+    setTasks([...tasks, task]);
+  };
+
+  const handleUpdateGoals = (daily: number, weekly: number) => {
+    setTotalHoursGoal(daily);
+    setWeeklyGoal(weekly);
+  };
+
+  const handleTasksReorder = (reorderedTasks: Task[]) => {
+    setTasks(reorderedTasks);
   };
 
   return (
@@ -204,6 +228,10 @@ export function StudyPlanner() {
               totalHours={totalHoursGoal}
               topics={topics}
               lastQuizResult={lastQuizResult}
+              weeklyHours={weeklyHours}
+              weeklyGoal={weeklyGoal}
+              isWeeklyView={view === "weekly"}
+              onEditGoals={() => setShowEditGoals(true)}
             />
           </div>
 
@@ -235,11 +263,18 @@ export function StudyPlanner() {
                   onTopicChange={setSelectedTopic}
                   onTaskToggle={toggleTaskCompletion}
                   onTaskClick={handleTaskClick}
+                  onAddTask={() => setShowAddTask(true)}
                 />
               </TabsContent>
 
               <TabsContent value="weekly" className="space-y-6 mt-0">
-                <WeeklyView tasks={tasks} topics={topics} onTaskClick={handleTaskClick} />
+                <WeeklyView 
+                  tasks={tasks} 
+                  topics={topics} 
+                  onTaskClick={handleTaskClick}
+                  onAddTask={() => setShowAddTask(true)}
+                  onTasksReorder={handleTasksReorder}
+                />
               </TabsContent>
                 </Tabs>
               </div>
@@ -285,6 +320,23 @@ export function StudyPlanner() {
           }}
         />
       )}
+
+      {/* Add Task Modal */}
+      <AddTaskModal
+        isOpen={showAddTask}
+        onClose={() => setShowAddTask(false)}
+        onAddTask={handleAddTask}
+        topics={topics}
+      />
+
+      {/* Edit Goals Modal */}
+      <EditGoalsModal
+        isOpen={showEditGoals}
+        onClose={() => setShowEditGoals(false)}
+        dailyGoal={totalHoursGoal}
+        weeklyGoal={weeklyGoal}
+        onUpdateGoals={handleUpdateGoals}
+      />
     </div>
   );
 }

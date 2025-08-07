@@ -22,7 +22,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Calendar, Clock } from "lucide-react";
+import { GripVertical, Calendar, Clock, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Task {
@@ -50,6 +50,7 @@ interface TaskListProps {
   onTopicChange: (topic: string) => void;
   onTaskToggle: (taskId: string) => void;
   onTaskClick: (task: Task) => void;
+  onAddTask?: () => void;
 }
 
 interface SortableTaskItemProps {
@@ -92,7 +93,10 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
             className="flex-shrink-0 data-[state=checked]:bg-study-green data-[state=checked]:border-study-green"
           />
           
-          <div className={`w-4 h-4 rounded-full bg-${task.color} flex-shrink-0 shadow-sm`} />
+          <div 
+            className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
+            style={{ backgroundColor: `hsl(var(--${task.color}))` }}
+          />
           
           <div className="flex-1 min-w-0">
             <h4 className={cn(
@@ -104,7 +108,11 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
             <div className="flex items-center gap-3 text-sm">
               <Badge 
                 variant="secondary" 
-                className={`bg-${task.color}-light text-${task.color} border-0 px-2 py-1`}
+                className="text-xs px-2 py-1"
+                style={{ 
+                  backgroundColor: `hsl(var(--${task.color}))`,
+                  color: 'white'
+                }}
               >
                 {task.topic}
               </Badge>
@@ -122,7 +130,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   );
 }
 
-export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick }: TaskListProps) {
+export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask }: TaskListProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -165,13 +173,21 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
               size="sm"
               variant={selectedTopic === topic.name ? "default" : "secondary"}
               onClick={() => onTopicChange(topic.name)}
-              className={
-                selectedTopic === topic.name
-                  ? `bg-${topic.color} hover:bg-${topic.color}/90 text-white shadow-sm`
-                  : "hover:bg-muted"
-              }
+                className={
+                  selectedTopic === topic.name
+                    ? "text-white shadow-sm"
+                    : "hover:bg-muted"
+                }
+                style={
+                  selectedTopic === topic.name 
+                    ? { backgroundColor: `hsl(var(--${topic.color}))` }
+                    : undefined
+                }
             >
-              <div className={`w-2 h-2 rounded-full bg-${topic.color} mr-2`} />
+              <div 
+                className="w-2 h-2 rounded-full mr-2"
+                style={{ backgroundColor: `hsl(var(--${topic.color}))` }}
+              />
               {topic.name}
             </Button>
           ))}
@@ -182,9 +198,21 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold">Today's Schedule</h3>
-          <Badge variant="secondary" className="bg-study-blue-light text-study-blue">
-            {tasks.length} tasks
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="bg-study-blue-light text-study-blue">
+              {tasks.length} tasks
+            </Badge>
+            {onAddTask && (
+              <Button 
+                size="sm" 
+                onClick={onAddTask} 
+                className="gap-2 bg-study-blue hover:bg-study-blue/90"
+              >
+                <Plus className="w-4 h-4" />
+                Add Task
+              </Button>
+            )}
+          </div>
         </div>
         
         <DndContext
