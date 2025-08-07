@@ -1,5 +1,7 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, Clock, Trophy, Target, TrendingUp } from "lucide-react";
 
 interface Subject {
   id: string;
@@ -16,82 +18,120 @@ interface StudyStatsProps {
 }
 
 export function StudyStats({ hoursStudied, totalHours, subjects, lastQuizResult }: StudyStatsProps) {
-  const studyProgress = (hoursStudied / totalHours) * 100;
-
-  const getColorClass = (color: string) => {
-    switch (color) {
-      case "study-purple":
-        return "text-study-purple";
-      case "study-orange":
-        return "text-study-orange";
-      case "study-green":
-        return "text-study-green";
-      default:
-        return "text-foreground";
-    }
-  };
+  const progressPercent = (hoursStudied / totalHours) * 100;
 
   return (
     <div className="space-y-6">
-      {/* Hours Studied Today */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center space-y-4">
-            <div className="text-sm text-muted-foreground">Hours Studied Today</div>
-            <div className="relative w-20 h-20 mx-auto">
-              <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-progress-bg"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  fill="transparent"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className="text-progress-green"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeDasharray={`${studyProgress}, 100`}
-                  strokeLinecap="round"
-                  fill="transparent"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-xl font-bold">{hoursStudied}/{totalHours}</div>
-                  <div className="text-xs text-muted-foreground">hours</div>
-                </div>
-              </div>
+      {/* Today's Progress Card */}
+      <Card className="shadow-sm border-0 bg-gradient-to-br from-study-blue-light to-card">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-study-blue/10 rounded-lg">
+              <Clock className="w-5 h-5 text-study-blue" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Today's Progress</h3>
+              <p className="text-sm text-muted-foreground">Track your daily goals</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Week Areas */}
-      <Card>
-        <CardContent className="p-6">
+          
           <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">Week Areas</div>
-            <div className="space-y-3">
-              {subjects.map((subject) => (
-                <div key={subject.id} className={`font-medium ${getColorClass(subject.color)}`}>
-                  {subject.name}
-                </div>
-              ))}
+            <div className="text-center">
+              <div className="text-4xl font-bold text-study-blue mb-2">
+                {hoursStudied}
+                <span className="text-lg text-muted-foreground">/{totalHours}h</span>
+              </div>
+              <Progress 
+                value={progressPercent} 
+                className="h-3 bg-study-blue-light/30"
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                {progressPercent.toFixed(0)}% complete • {totalHours - hoursStudied}h remaining
+              </p>
             </div>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
-      {/* Last Quiz Result */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-2">
-            <div className="text-sm text-muted-foreground">Last Quiz Result</div>
-            <div className="text-3xl font-bold">{lastQuizResult}%</div>
+      {/* Subject Progress Card */}
+      <Card className="shadow-sm border-0">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-study-green/10 rounded-lg">
+              <BookOpen className="w-5 h-5 text-study-green" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Subject Progress</h3>
+              <p className="text-sm text-muted-foreground">Your learning journey</p>
+            </div>
           </div>
-        </CardContent>
+          
+          <div className="space-y-4">
+            {subjects.map((subject) => (
+              <div key={subject.id} className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className={`w-4 h-4 rounded-full bg-${subject.color}`}
+                    />
+                    <span className="font-medium">{subject.name}</span>
+                  </div>
+                  <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                    {subject.progress}%
+                  </Badge>
+                </div>
+                <Progress 
+                  value={subject.progress} 
+                  className="h-2"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Achievement Card */}
+      <Card className="shadow-sm border-0 bg-gradient-to-br from-study-orange-light to-card">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-study-orange/10 rounded-lg">
+              <Trophy className="w-5 h-5 text-study-orange" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Latest Achievement</h3>
+              <p className="text-sm text-muted-foreground">Keep up the great work!</p>
+            </div>
+          </div>
+          
+          <div className="text-center space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="text-4xl font-bold text-study-orange">
+                {lastQuizResult}%
+              </div>
+              <TrendingUp className="w-6 h-6 text-study-orange" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Last Quiz Score
+            </p>
+            <Badge 
+              variant="secondary" 
+              className={`${
+                lastQuizResult >= 80 
+                  ? "bg-study-green-light text-study-green border-study-green/20" 
+                  : lastQuizResult >= 60 
+                  ? "bg-study-orange-light text-study-orange border-study-orange/20"
+                  : "bg-destructive/10 text-destructive border-destructive/20"
+              }`}
+            >
+              {lastQuizResult >= 80 
+                ? "🎉 Excellent!" 
+                : lastQuizResult >= 60 
+                ? "👍 Good Job!"
+                : "📚 Keep Practicing!"
+              }
+            </Badge>
+          </div>
+        </div>
       </Card>
     </div>
   );

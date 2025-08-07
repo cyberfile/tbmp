@@ -22,7 +22,8 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from "lucide-react";
+import { GripVertical, Calendar, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
@@ -68,48 +69,52 @@ function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
     transition,
   };
 
-  const getColorClasses = (color: string) => {
-    switch (color) {
-      case "study-purple":
-        return "border-l-study-purple bg-study-purple-light/30";
-      case "study-orange":
-        return "border-l-study-orange bg-study-orange-light/30";
-      case "study-green":
-        return "border-l-study-green bg-study-green-light/30";
-      case "study-blue":
-        return "border-l-study-blue bg-study-blue-light/30";
-      default:
-        return "border-l-gray-400 bg-gray-50";
-    }
-  };
-
   return (
-    <div
+    <Card 
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-4 rounded-lg border-l-4 ${getColorClasses(task.color)} ${
-        task.completed ? "opacity-60" : ""
-      }`}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "group cursor-move transition-all duration-200 hover:shadow-md border-0 shadow-sm",
+        task.completed && "opacity-60 scale-[0.98]"
+      )}
     >
-      <div {...attributes} {...listeners} className="cursor-grab hover:cursor-grabbing">
-        <GripVertical className="w-4 h-4 text-muted-foreground" />
-      </div>
-      
-      <Checkbox
-        checked={task.completed}
-        onCheckedChange={() => onToggle(task.id)}
-        className="data-[state=checked]:bg-progress-green data-[state=checked]:border-progress-green"
-      />
-      
-      <div className="flex-1">
-        <div className={`font-medium ${task.completed ? "line-through" : ""}`}>
-          {task.title}
+      <div className="p-4">
+        <div className="flex items-center gap-4">
+          <Checkbox 
+            checked={task.completed} 
+            onCheckedChange={() => onToggle(task.id)}
+            className="flex-shrink-0 data-[state=checked]:bg-study-green data-[state=checked]:border-study-green"
+          />
+          
+          <div className={`w-4 h-4 rounded-full bg-${task.color} flex-shrink-0 shadow-sm`} />
+          
+          <div className="flex-1 min-w-0">
+            <h4 className={cn(
+              "font-semibold text-foreground mb-1",
+              task.completed && "line-through text-muted-foreground"
+            )}>
+              {task.title}
+            </h4>
+            <div className="flex items-center gap-3 text-sm">
+              <Badge 
+                variant="secondary" 
+                className={`bg-${task.color}-light text-${task.color} border-0 px-2 py-1`}
+              >
+                {task.subject}
+              </Badge>
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {task.startTime} - {task.endTime}
+              </span>
+            </div>
+          </div>
+          
+          <GripVertical className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
         </div>
-        <div className="text-sm text-muted-foreground">
-          {task.startTime} - {task.endTime}
-        </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -136,51 +141,83 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
     }
   };
 
-  const topics = ["All", ...subjects.map(s => s.name)];
-
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Tasks</CardTitle>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Topic</span>
-            <div className="flex gap-1">
-              {topics.map((topic) => (
-                <Badge
-                  key={topic}
-                  variant={selectedTopic === topic ? "default" : "outline"}
-                  className={`cursor-pointer ${
-                    selectedTopic === topic 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-secondary"
-                  }`}
-                  onClick={() => onTopicChange(topic)}
-                >
-                  {topic}
-                </Badge>
-              ))}
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Subject Filter */}
+      <div className="flex items-center gap-3 flex-wrap p-4 bg-muted/30 rounded-xl">
+        <span className="text-sm font-semibold text-foreground">Filter by subject:</span>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant={selectedTopic === "All" ? "default" : "secondary"}
+            onClick={() => onTopicChange("All")}
+            className={selectedTopic === "All" ? "bg-study-blue hover:bg-study-blue/90" : ""}
+          >
+            All Subjects
+          </Button>
+          {subjects.map((subject) => (
+            <Button
+              key={subject.id}
+              size="sm"
+              variant={selectedTopic === subject.name ? "default" : "secondary"}
+              onClick={() => onTopicChange(subject.name)}
+              className={
+                selectedTopic === subject.name
+                  ? `bg-${subject.color} hover:bg-${subject.color}/90 text-white shadow-sm`
+                  : "hover:bg-muted"
+              }
+            >
+              <div className={`w-2 h-2 rounded-full bg-${subject.color} mr-2`} />
+              {subject.name}
+            </Button>
+          ))}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      </div>
+
+      {/* Task List */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold">Today's Schedule</h3>
+          <Badge variant="secondary" className="bg-study-blue-light text-study-blue">
+            {tasks.length} tasks
+          </Badge>
+        </div>
+        
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={sortedTasks} strategy={verticalListSortingStrategy}>
-            {sortedTasks.map((task) => (
-              <SortableTaskItem
-                key={task.id}
-                task={task}
-                onToggle={onTaskToggle}
-              />
-            ))}
+          <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {tasks.map((task) => (
+                <SortableTaskItem
+                  key={task.id}
+                  task={task}
+                  onToggle={onTaskToggle}
+                />
+              ))}
+            </div>
           </SortableContext>
         </DndContext>
-      </CardContent>
-    </Card>
+
+        {tasks.length === 0 && (
+          <Card className="shadow-sm border-0">
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h4 className="text-lg font-medium mb-2">No tasks found</h4>
+              <p className="text-muted-foreground">
+                {selectedTopic === "All" 
+                  ? "You don't have any tasks scheduled for today."
+                  : `No tasks found for ${selectedTopic}.`
+                }
+              </p>
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
   );
 }

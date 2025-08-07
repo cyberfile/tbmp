@@ -36,15 +36,15 @@
 
     /* Study Tool Specific Colors */
     --study-purple: 280 87% 65%;
-    --study-purple-light: 280 87% 90%;
+    --study-purple-light: 280 87% 95%;
     --study-green: 142 71% 45%;
-    --study-green-light: 142 71% 90%;
+    --study-green-light: 142 71% 95%;
     --study-orange: 25 95% 53%;
-    --study-orange-light: 25 95% 90%;
-    --study-blue: 217 91% 60%;
-    --study-blue-light: 217 91% 90%;
+    --study-orange-light: 25 95% 95%;
+    --study-blue: 214 100% 59%;
+    --study-blue-light: 214 100% 95%;
     --study-pink: 320 65% 70%;
-    --study-pink-light: 320 65% 95%;
+    --study-pink-light: 320 65% 98%;
 
     /* Progress Colors */
     --progress-bg: 210 40% 96%;

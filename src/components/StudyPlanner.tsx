@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Calendar, Clock, Bell, Printer, Lock, Settings } from "lucide-react";
+import { Brain, Calendar, Clock, Bell, Printer, Settings, User } from "lucide-react";
 import { TaskList } from "./TaskList";
 import { WeeklyView } from "./WeeklyView";
 import { StudyStats } from "./StudyStats";
@@ -109,61 +109,75 @@ export function StudyPlanner() {
     : tasks.filter(task => task.subject === selectedTopic);
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2">
+                <Brain className="w-8 h-8 text-study-blue" />
+                <span className="text-xl font-bold">StudyAI</span>
+              </div>
+              <nav className="hidden md:flex items-center gap-6">
+                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                  Dashboard
+                </Button>
+                <Button variant="ghost" className="text-foreground font-medium">
+                  Study Tools
+                </Button>
+              </nav>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground hidden sm:block">aly</span>
+              <Button variant="outline" size="sm" className="gap-2">
+                <User className="w-4 h-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Hero Section */}
+        <div className="text-center space-y-4">
+          <h1 className="text-5xl font-bold leading-tight">
+            <span className="bg-gradient-to-r from-study-blue to-study-purple bg-clip-text text-transparent">
+              AI-Powered
+            </span>{" "}
+            Study Planner
+            <br />
+            <span className="text-foreground">For The Future</span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Experience the next generation of learning with our AI-powered platform. Personalized 
+            study plans, intelligent tools, and adaptive assessments to help you achieve your goals.
+          </p>
+          <div className="flex items-center justify-center gap-4 pt-4">
             <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2"
+              size="lg" 
+              className="gap-2 bg-study-blue hover:bg-study-blue/90"
               onClick={() => setShowNotifications(true)}
             >
               <Bell className="w-4 h-4" />
-              Notifications
+              Set Reminders
             </Button>
             <Button 
               variant="outline" 
-              size="sm" 
+              size="lg" 
               className="gap-2"
               onClick={() => setShowPrintView(true)}
             >
               <Printer className="w-4 h-4" />
-              Print
+              Export Schedule
             </Button>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Settings className="w-4 h-4" />
-              Settings
-            </Button>
-          </div>
-        </div>
-
-        {/* Title and Tags */}
-        <div className="space-y-4">
-          <h1 className="text-4xl font-bold">New Study Planner</h1>
-          <p className="text-muted-foreground">Plan and track your study sessions efficiently</p>
-          
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Tags</span>
-            <Badge variant="secondary" className="bg-study-pink-light text-study-purple">
-              Tag 1
-            </Badge>
-            <Badge variant="secondary" className="bg-study-green-light text-study-green">
-              Tag 2
-            </Badge>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Sidebar Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Stats Sidebar */}
           <div className="space-y-6">
             <StudyStats 
               hoursStudied={hoursStudiedToday}
@@ -174,34 +188,41 @@ export function StudyPlanner() {
           </div>
 
           {/* Main Content Area */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* View Toggle */}
-            <Tabs value={view} onValueChange={(value) => setView(value as "daily" | "weekly")}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="daily" className="gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Daily View
-                </TabsTrigger>
-                <TabsTrigger value="weekly" className="gap-2">
-                  <Clock className="w-4 h-4" />
-                  Weekly View
-                </TabsTrigger>
-              </TabsList>
+          <div className="lg:col-span-3 space-y-6">
+            <Card className="shadow-sm border-0 bg-card">
+              <div className="p-6">
+                {/* View Toggle */}
+                <Tabs value={view} onValueChange={(value) => setView(value as "daily" | "weekly")}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-semibold">Your Study Schedule</h2>
+                    <TabsList className="grid grid-cols-2 w-auto">
+                      <TabsTrigger value="daily" className="gap-2 data-[state=active]:bg-study-blue data-[state=active]:text-white">
+                        <Calendar className="w-4 h-4" />
+                        Daily View
+                      </TabsTrigger>
+                      <TabsTrigger value="weekly" className="gap-2 data-[state=active]:bg-study-blue data-[state=active]:text-white">
+                        <Clock className="w-4 h-4" />
+                        Weekly View
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
 
-              <TabsContent value="daily" className="space-y-6">
-                <TaskList 
-                  tasks={filteredTasks}
-                  subjects={subjects}
-                  selectedTopic={selectedTopic}
-                  onTopicChange={setSelectedTopic}
-                  onTaskToggle={toggleTaskCompletion}
-                />
-              </TabsContent>
+                  <TabsContent value="daily" className="space-y-6 mt-0">
+                    <TaskList 
+                      tasks={filteredTasks}
+                      subjects={subjects}
+                      selectedTopic={selectedTopic}
+                      onTopicChange={setSelectedTopic}
+                      onTaskToggle={toggleTaskCompletion}
+                    />
+                  </TabsContent>
 
-              <TabsContent value="weekly" className="space-y-6">
-                <WeeklyView tasks={tasks} subjects={subjects} />
-              </TabsContent>
-            </Tabs>
+                  <TabsContent value="weekly" className="space-y-6 mt-0">
+                    <WeeklyView tasks={tasks} subjects={subjects} />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </Card>
           </div>
         </div>
       </div>
