@@ -3,17 +3,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Printer, Download, X } from "lucide-react";
 
+const resolveColor = (c?: string) => {
+  if (!c) return undefined;
+  const v = c.trim();
+  if (v.startsWith('#') || v.startsWith('rgb') || v.startsWith('hsl(')) return v;
+  return `hsl(var(--${v}))`;
+};
+
 interface Task {
   id: string;
   title: string;
-  subject: string;
+  topic: string;
   startTime: string;
   endTime: string;
   completed: boolean;
   color: string;
+  reminderMinutesBefore?: number;
 }
 
-interface Subject {
+interface Topic {
   id: string;
   name: string;
   color: string;
@@ -22,12 +30,12 @@ interface Subject {
 
 interface PrintableViewProps {
   tasks: Task[];
-  subjects: Subject[];
+  topics: Topic[];
   viewType: "weekly" | "monthly";
   onClose: () => void;
 }
 
-export function PrintableView({ tasks, subjects, viewType, onClose }: PrintableViewProps) {
+export function PrintableView({ tasks, topics, viewType, onClose }: PrintableViewProps) {
   const handlePrint = () => {
     window.print();
   };
@@ -72,6 +80,16 @@ export function PrintableView({ tasks, subjects, viewType, onClose }: PrintableV
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <style>
+        {`
+          @media print {
+            body * { visibility: hidden; }
+            #printable-content, #printable-content * { visibility: visible; }
+            #printable-content { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+          }
+        `}
+      </style>
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b no-print">
@@ -96,20 +114,24 @@ export function PrintableView({ tasks, subjects, viewType, onClose }: PrintableV
         {/* Printable Content */}
         <div id="printable-content" className="p-6">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold">Study Schedule</h1>
+            <h1 className="text-2xl font-bold mb-2">Mathematics Study Planner</h1>
+            <p className="text-muted-foreground mb-2">Topic-based learning schedule</p>
             <p className="text-muted-foreground">
               {viewType === "weekly" ? "Weekly" : "Monthly"} Overview - {new Date().toLocaleDateString()}
             </p>
           </div>
 
-          {/* Subjects Legend */}
+          {/* Topics Legend */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Subjects</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {subjects.map((subject) => (
-                <div key={subject.id} className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded-full bg-${subject.color}`} />
-                  <span>{subject.name}</span>
+            <h3 className="font-semibold mb-3">Topics:</h3>
+            <div className="flex flex-wrap gap-2">
+              {topics.map((topic) => (
+                <div key={topic.id} className="flex items-center gap-2 mr-4 mb-2">
+                  <div 
+                    className="w-4 h-4 rounded border"
+                    style={{ backgroundColor: resolveColor(topic.color) }}
+                  />
+                  <span className="text-sm">{topic.name}</span>
                 </div>
               ))}
             </div>
@@ -124,13 +146,12 @@ export function PrintableView({ tasks, subjects, viewType, onClose }: PrintableV
                   {dayTasks.length > 0 ? (
                     <div className="space-y-2">
                       {dayTasks.map((task) => (
-                        <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
                           <div>
                             <div className="font-medium">{task.title}</div>
-                            <div className="text-sm text-gray-600">{task.subject}</div>
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {task.startTime} - {task.endTime}
+                            <div className="text-xs text-gray-600 mt-1">
+                              {task.topic} • {task.startTime} - {task.endTime}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -149,22 +170,27 @@ export function PrintableView({ tasks, subjects, viewType, onClose }: PrintableV
               <h3 className="text-lg font-semibold">All Tasks</h3>
               <div className="space-y-2">
                 {tasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                  <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
                     <div>
                       <div className="font-medium">{task.title}</div>
-                      <div className="text-sm text-gray-600">{task.subject}</div>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {task.startTime} - {task.endTime}
+                      <div className="text-xs text-gray-600 mt-1">
+                        {task.topic} • {task.startTime} - {task.endTime}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
+            )}
 
-          {/* Footer */}
-          <div className="mt-8 pt-4 border-t text-center text-sm text-gray-500">
+            {/* Extra Notes (optional) */}
+            <div className="mt-8">
+              <h3 className="font-semibold mb-2">Additional Notes</h3>
+              <div className="h-24 border border-dashed rounded-md" />
+            </div>
+
+            {/* Footer */}
+            <div className="mt-8 pt-4 border-t text-center text-sm text-gray-500">
             Generated on {new Date().toLocaleDateString()} | Study AI Tool
           </div>
         </div>

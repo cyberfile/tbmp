@@ -1,18 +1,23 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Brain, Calendar, Clock, Bell, Printer, Settings, User } from "lucide-react";
+import { Brain, Calendar, Clock, Bell, Printer, Settings, LogOut } from "lucide-react";
 import { TaskList } from "./TaskList";
 import { WeeklyView } from "./WeeklyView";
 import { StudyStats } from "./StudyStats";
-import { SubjectManager } from "./SubjectManager";
+import { TopicManager } from "./TopicManager";
 import { NotificationSettings } from "./NotificationSettings";
 import { PrintableView } from "./PrintableView";
+import { TaskDetailsModal } from "./TaskDetailsModal";
+import { AddTaskModal } from "./AddTaskModal";
+import { EditGoalsModal } from "./EditGoalsModal";
 
-interface Subject {
+interface Topic {
   id: string;
   name: string;
   color: string;
@@ -23,90 +28,182 @@ interface Task {
   id: string;
   title: string;
   subject: string;
+  topic: string;
   startTime: string;
   endTime: string;
   completed: boolean;
   color: string;
+  reminderMinutesBefore?: number;
+  dayIndex?: number;
+  details?: string;
 }
 
-const initialSubjects: Subject[] = [
-  { id: "1", name: "Cells", color: "study-purple", progress: 75 },
-  { id: "2", name: "Algebra", color: "study-orange", progress: 60 },
-  { id: "3", name: "Python", color: "study-green", progress: 40 },
+const initialTopics: Topic[] = [
+  { id: "1", name: "Topic 1", color: "study-purple", progress: 75 },
+  { id: "2", name: "Topic 2", color: "study-orange", progress: 60 },
+  { id: "3", name: "Topic 3", color: "study-green", progress: 40 },
+  { id: "4", name: "Topic 4", color: "study-blue", progress: 20 },
 ];
 
 const initialTasks: Task[] = [
   {
     id: "1",
-    title: "Cell Functions",
-    subject: "Cells",
-    startTime: "1:00 pm",
-    endTime: "2:00pm",
+    title: "Introduction to Fundamentals",
+    subject: "Mathematics",
+    topic: "Topic 1",
+    startTime: "13:00",
+    endTime: "14:00",
     completed: false,
     color: "study-purple",
+    dayIndex: 0,
   },
   {
     id: "2",
-    title: "Booleans",
-    subject: "Python",
-    startTime: "7:00 pm",
-    endTime: "8:00pm",
+    title: "Basic Concepts Review",
+    subject: "Mathematics",
+    topic: "Topic 2",
+    startTime: "14:30",
+    endTime: "15:15",
     completed: false,
     color: "study-orange",
+    dayIndex: 1,
   },
   {
     id: "3",
-    title: "Exponential Functions",
-    subject: "Algebra",
-    startTime: "2:30 pm",
-    endTime: "3:15pm",
+    title: "Advanced Methods",
+    subject: "Mathematics",
+    topic: "Topic 3",
+    startTime: "16:00",
+    endTime: "16:30",
     completed: false,
     color: "study-green",
+    dayIndex: 2,
   },
   {
     id: "4",
-    title: "Cell Quiz",
-    subject: "Cells",
-    startTime: "4:00 pm",
-    endTime: "4:30pm",
+    title: "Problem Solving",
+    subject: "Mathematics",
+    topic: "Topic 1",
+    startTime: "18:00",
+    endTime: "18:30",
     completed: false,
     color: "study-purple",
+    dayIndex: 3,
   },
   {
     id: "5",
-    title: "Graphing",
-    subject: "Algebra",
-    startTime: "6:00 pm",
-    endTime: "6:30pm",
+    title: "Practice Questions",
+    subject: "Mathematics",
+    topic: "Topic 4",
+    startTime: "19:00",
+    endTime: "20:00",
     completed: false,
-    color: "study-green",
+    color: "study-blue",
+    dayIndex: 4,
   },
 ];
 
 export function StudyPlanner() {
   const [view, setView] = useState<"daily" | "weekly">("daily");
-  const [subjects] = useState<Subject[]>(initialSubjects);
+  const [topics, setTopics] = useState<Topic[]>(initialTopics);
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTopic, setSelectedTopic] = useState("All");
+  const [showTopicManager, setShowTopicManager] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showPrintView, setShowPrintView] = useState(false);
+  const [showNoteUpload, setShowNoteUpload] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [printViewType, setPrintViewType] = useState<"weekly" | "monthly">("weekly");
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [showEditGoals, setShowEditGoals] = useState(false);
+  const [weeklyGoal, setWeeklyGoal] = useState(35);
+  const [weeklyHours, setWeeklyHours] = useState(28);
+
+  const [plannerTitle, setPlannerTitle] = useState("Mathematics Study Planner");
+  const [plannerDescription, setPlannerDescription] = useState<string>("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+
+  const mondayBasedToday = (new Date().getDay() + 6) % 7; // 0 = Monday
+  const [selectedDay, setSelectedDay] = useState<number>(mondayBasedToday);
 
   const hoursStudiedToday = 4;
-  const totalHoursGoal = 5;
+  const [totalHoursGoal, setTotalHoursGoal] = useState(5);
   const lastQuizResult = 70;
-
   const studyProgress = (hoursStudiedToday / totalHoursGoal) * 100;
 
-  const toggleTaskCompletion = (taskId: string) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    ));
+  const computeTopicsProgress = (allTasks: Task[], allTopics: Topic[]) => {
+    return allTopics.map((t) => {
+      const topicTasks = allTasks.filter((ts) => ts.topic === t.name);
+      const completed = topicTasks.filter((ts) => ts.completed).length;
+      const total = topicTasks.length;
+      const progress = total ? Math.round((completed / total) * 100) : 0;
+      return { ...t, progress };
+    });
   };
 
-  const filteredTasks = selectedTopic === "All" 
-    ? tasks 
-    : tasks.filter(task => task.subject === selectedTopic);
+  const toggleTaskCompletion = (taskId: string) => {
+    setTasks((prev) => {
+      const updated = prev.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      );
+      setTopics((prevTopics) => computeTopicsProgress(updated, prevTopics));
+      return updated;
+    });
+  };
+
+const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
+const filteredTasks = selectedTopic === "All" 
+  ? tasksForDay 
+  : tasksForDay.filter(task => task.topic === selectedTopic);
+
+  const handleTaskClick = (task: Task) => {
+    console.log("Task clicked:", task); // Debug log
+    setSelectedTask(task);
+    setShowNoteUpload(true);
+  };
+
+const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
+  const task: Task = {
+    ...newTask,
+    id: Date.now().toString(),
+    completed: false,
+    dayIndex: selectedDay,
+  };
+  setTasks((prev) => {
+    const next = [...prev, task];
+    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+    return next;
+  });
+};
+
+  const handleUpdateGoals = (daily: number, weekly: number) => {
+    setTotalHoursGoal(daily);
+    setWeeklyGoal(weekly);
+  };
+
+const handleTasksReorder = (reorderedTasks: Task[]) => {
+  setTasks(() => {
+    setTopics((prevTopics) => computeTopicsProgress(reorderedTasks, prevTopics));
+    return reorderedTasks;
+  });
+};
+
+const handleTaskDayChange = (taskId: string, dayIndex: number) => {
+  setTasks((prev) => {
+    const next = prev.map(t => t.id === taskId ? { ...t, dayIndex } : t);
+    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+    return next;
+  });
+};
+
+const handleUpdateTask = (updatedTask: Task) => {
+  setTasks((prev) => {
+    const next = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
+    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+    return next;
+  });
+};
 
   return (
     <div className="min-h-screen bg-background">
@@ -130,8 +227,10 @@ export function StudyPlanner() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground hidden sm:block">aly</span>
-              <Button variant="outline" size="sm" className="gap-2">
-                <User className="w-4 h-4" />
+              <Button variant="outline" size="sm" className="gap-2 border-study-blue text-study-blue bg-transparent hover:bg-study-blue/10 rounded-lg">
+                <span className="inline-flex items-center justify-center rounded-sm w-5 h-5 border border-study-blue text-study-blue bg-transparent">
+                  <LogOut className="w-3.5 h-3.5" />
+                </span>
                 Sign Out
               </Button>
             </div>
@@ -140,37 +239,72 @@ export function StudyPlanner() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Hero Section */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl font-bold leading-tight">
-            <span className="bg-gradient-to-r from-study-blue to-study-purple bg-clip-text text-transparent">
-              AI-Powered
-            </span>{" "}
-            Study Planner
-            <br />
-            <span className="text-foreground">For The Future</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Experience the next generation of learning with our AI-powered platform. Personalized 
-            study plans, intelligent tools, and adaptive assessments to help you achieve your goals.
-          </p>
-          <div className="flex items-center justify-center gap-4 pt-4">
+        {/* Page Title */}
+        <div className="flex items-center justify-between">
+          <div className="max-w-2xl">
+            {isEditingTitle ? (
+              <Input
+                value={plannerTitle}
+                onChange={(e) => setPlannerTitle(e.target.value)}
+                onBlur={() => setIsEditingTitle(false)}
+                className="h-10 text-2xl font-bold"
+                aria-label="Planner title"
+              />
+            ) : (
+              <h1
+                className="text-3xl font-bold cursor-text"
+                onClick={() => setIsEditingTitle(true)}
+              >
+                {plannerTitle}
+              </h1>
+            )}
+            <div className="mt-2">
+              {isEditingDescription ? (
+                <Textarea
+                  value={plannerDescription}
+                  onChange={(e) => setPlannerDescription(e.target.value)}
+                  onBlur={() => setIsEditingDescription(false)}
+                  placeholder="Add an optional description"
+                  className="min-h-[60px]"
+                  aria-label="Planner description"
+                />
+              ) : (
+                <button
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsEditingDescription(true)}
+                >
+                  {plannerDescription ? plannerDescription : "Add an optional description"}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
             <Button 
-              size="lg" 
-              className="gap-2 bg-study-blue hover:bg-study-blue/90"
-              onClick={() => setShowNotifications(true)}
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => setShowTopicManager(true)}
             >
-              <Bell className="w-4 h-4" />
-              Set Reminders
+              <Settings className="w-4 h-4" />
+              Manage Topics
             </Button>
             <Button 
               variant="outline" 
-              size="lg" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => setShowNotifications(true)}
+            >
+              <Bell className="w-4 h-4" />
+              Notifications
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
               className="gap-2"
               onClick={() => setShowPrintView(true)}
             >
               <Printer className="w-4 h-4" />
-              Export Schedule
+              Export
             </Button>
           </div>
         </div>
@@ -182,8 +316,12 @@ export function StudyPlanner() {
             <StudyStats 
               hoursStudied={hoursStudiedToday}
               totalHours={totalHoursGoal}
-              subjects={subjects}
+              topics={topics}
               lastQuizResult={lastQuizResult}
+              weeklyHours={weeklyHours}
+              weeklyGoal={weeklyGoal}
+              isWeeklyView={view === "weekly"}
+              onEditGoals={() => setShowEditGoals(true)}
             />
           </div>
 
@@ -207,25 +345,56 @@ export function StudyPlanner() {
                     </TabsList>
                   </div>
 
-                  <TabsContent value="daily" className="space-y-6 mt-0">
-                    <TaskList 
-                      tasks={filteredTasks}
-                      subjects={subjects}
-                      selectedTopic={selectedTopic}
-                      onTopicChange={setSelectedTopic}
-                      onTaskToggle={toggleTaskCompletion}
-                    />
-                  </TabsContent>
+<TabsContent value="daily" className="space-y-6 mt-0">
+  <div className="flex items-center gap-2 flex-wrap mb-2">
+    {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
+      <Button
+        key={d}
+        size="sm"
+        variant={selectedDay === i ? 'default' : 'secondary'}
+        onClick={() => setSelectedDay(i)}
+        className={selectedDay === i ? 'bg-study-blue hover:bg-study-blue/90' : ''}
+      >
+        {d}
+      </Button>
+    ))}
+  </div>
+  <TaskList 
+    tasks={filteredTasks}
+    topics={topics}
+    selectedTopic={selectedTopic}
+    onTopicChange={setSelectedTopic}
+    onTaskToggle={toggleTaskCompletion}
+    onTaskClick={handleTaskClick}
+    onAddTask={() => setShowAddTask(true)}
+  />
+</TabsContent>
 
-                  <TabsContent value="weekly" className="space-y-6 mt-0">
-                    <WeeklyView tasks={tasks} subjects={subjects} />
-                  </TabsContent>
+<TabsContent value="weekly" className="space-y-6 mt-0">
+  <WeeklyView 
+    tasks={tasks} 
+    topics={topics} 
+    onTaskClick={handleTaskClick}
+    onAddTask={() => setShowAddTask(true)}
+    onTasksReorder={handleTasksReorder}
+    onTaskDayChange={handleTaskDayChange}
+  />
+</TabsContent>
                 </Tabs>
               </div>
             </Card>
           </div>
         </div>
       </div>
+
+      {/* Topic Manager Modal */}
+      {showTopicManager && (
+        <TopicManager
+          topics={topics}
+          onTopicsChange={setTopics}
+          onClose={() => setShowTopicManager(false)}
+        />
+      )}
 
       {/* Notification Settings Modal */}
       {showNotifications && (
@@ -238,11 +407,42 @@ export function StudyPlanner() {
       {showPrintView && (
         <PrintableView
           tasks={tasks}
-          subjects={subjects}
+          topics={topics}
           viewType={printViewType}
           onClose={() => setShowPrintView(false)}
         />
       )}
+
+      {/* Task Details Modal */}
+      {showNoteUpload && selectedTask && (
+        <TaskDetailsModal
+          isOpen={true}
+          task={selectedTask}
+          topics={topics}
+          onClose={() => {
+            setShowNoteUpload(false);
+            setSelectedTask(null);
+          }}
+          onUpdateTask={handleUpdateTask}
+        />
+      )}
+
+      {/* Add Task Modal */}
+      <AddTaskModal
+        isOpen={showAddTask}
+        onClose={() => setShowAddTask(false)}
+        onAddTask={handleAddTask}
+        topics={topics}
+      />
+
+      {/* Edit Goals Modal */}
+      <EditGoalsModal
+        isOpen={showEditGoals}
+        onClose={() => setShowEditGoals(false)}
+        dailyGoal={totalHoursGoal}
+        weeklyGoal={weeklyGoal}
+        onUpdateGoals={handleUpdateGoals}
+      />
     </div>
   );
 }

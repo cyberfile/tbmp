@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,20 +22,39 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Calendar, Clock } from "lucide-react";
+import { GripVertical, Calendar, Clock, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const resolveColor = (c?: string) => {
+  if (!c) return undefined;
+  const v = c.trim();
+  if (v.startsWith('#') || v.startsWith('rgb') || v.startsWith('hsl(')) return v;
+  return `hsl(var(--${v}))`;
+};
+
+const to12h = (time: string) => {
+  if (!time) return time;
+  const t = time.trim();
+  if (/am|pm/i.test(t)) return t.replace(/\s?(am|pm)/i, ' $1').toLowerCase();
+  const [h, m = '00'] = t.split(':');
+  let hh = parseInt(h || '0', 10);
+  const ampm = hh >= 12 ? 'pm' : 'am';
+  hh = hh % 12; if (hh === 0) hh = 12;
+  return `${hh}:${m.padStart(2, '0')} ${ampm}`;
+};
 
 interface Task {
   id: string;
   title: string;
   subject: string;
+  topic: string;
   startTime: string;
   endTime: string;
   completed: boolean;
   color: string;
 }
 
-interface Subject {
+interface Topic {
   id: string;
   name: string;
   color: string;
@@ -44,24 +63,28 @@ interface Subject {
 
 interface TaskListProps {
   tasks: Task[];
-  subjects: Subject[];
+  topics: Topic[];
   selectedTopic: string;
   onTopicChange: (topic: string) => void;
   onTaskToggle: (taskId: string) => void;
+  onTaskClick: (task: Task) => void;
+  onAddTask?: () => void;
 }
 
 interface SortableTaskItemProps {
   task: Task;
   onToggle: (taskId: string) => void;
+  onClick: (task: Task) => void;
 }
 
-function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
+function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
+    isDragging,
   } = useSortable({ id: task.id });
 
   const style = {
@@ -70,25 +93,29 @@ function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
   };
 
   return (
-    <Card 
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
+      <Card 
+        ref={setNodeRef}
+        style={{ ...style, borderLeftColor: resolveColor(task.color) }}
       className={cn(
-        "group cursor-move transition-all duration-200 hover:shadow-md border-0 shadow-sm",
+        "group cursor-move transition-all duration-200 hover:shadow-md border border-border shadow-sm border-l-4",
+        isDragging && "ring-2 ring-study-blue/40",
         task.completed && "opacity-60 scale-[0.98]"
       )}
+      onClick={() => onClick(task)}
     >
       <div className="p-4">
         <div className="flex items-center gap-4">
           <Checkbox 
             checked={task.completed} 
             onCheckedChange={() => onToggle(task.id)}
+            onClick={(e) => e.stopPropagation()}
             className="flex-shrink-0 data-[state=checked]:bg-study-green data-[state=checked]:border-study-green"
           />
           
-          <div className={`w-4 h-4 rounded-full bg-${task.color} flex-shrink-0 shadow-sm`} />
+          <div 
+            className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
+            style={{ backgroundColor: resolveColor(task.color) }}
+          />
           
           <div className="flex-1 min-w-0">
             <h4 className={cn(
@@ -100,25 +127,37 @@ function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
             <div className="flex items-center gap-3 text-sm">
               <Badge 
                 variant="secondary" 
-                className={`bg-${task.color}-light text-${task.color} border-0 px-2 py-1`}
+                className="text-xs px-2 py-1"
+                style={{ 
+                  backgroundColor: resolveColor(task.color),
+                  color: 'white'
+                }}
               >
-                {task.subject}
+                {task.topic}
               </Badge>
               <span className="text-muted-foreground flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {task.startTime} - {task.endTime}
+                {to12h(task.startTime)} - {to12h(task.endTime)}
               </span>
             </div>
           </div>
           
-          <GripVertical className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
+          <button 
+            aria-label="Drag task"
+            className="p-1 -mr-1 text-muted-foreground hover:text-foreground cursor-grab flex-shrink-0"
+            {...attributes}
+            {...listeners}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </Card>
   );
 }
 
-export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTaskToggle }: TaskListProps) {
+export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask }: TaskListProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -127,6 +166,10 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  useEffect(() => {
+    setSortedTasks(tasks);
+  }, [tasks]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -145,7 +188,7 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
     <div className="space-y-6">
       {/* Subject Filter */}
       <div className="flex items-center gap-3 flex-wrap p-4 bg-muted/30 rounded-xl">
-        <span className="text-sm font-semibold text-foreground">Filter by subject:</span>
+        <span className="text-sm font-semibold text-foreground">Filter by topic:</span>
         <div className="flex gap-2 flex-wrap">
           <Button
             size="sm"
@@ -153,22 +196,30 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
             onClick={() => onTopicChange("All")}
             className={selectedTopic === "All" ? "bg-study-blue hover:bg-study-blue/90" : ""}
           >
-            All Subjects
+            All Topics
           </Button>
-          {subjects.map((subject) => (
+          {topics.map((topic) => (
             <Button
-              key={subject.id}
+              key={topic.id}
               size="sm"
-              variant={selectedTopic === subject.name ? "default" : "secondary"}
-              onClick={() => onTopicChange(subject.name)}
-              className={
-                selectedTopic === subject.name
-                  ? `bg-${subject.color} hover:bg-${subject.color}/90 text-white shadow-sm`
-                  : "hover:bg-muted"
-              }
+              variant={selectedTopic === topic.name ? "default" : "secondary"}
+              onClick={() => onTopicChange(topic.name)}
+                className={
+                  selectedTopic === topic.name
+                    ? "text-white shadow-sm"
+                    : "hover:bg-muted"
+                }
+                style={
+                  selectedTopic === topic.name 
+                    ? { backgroundColor: resolveColor(topic.color) }
+                    : undefined
+                }
             >
-              <div className={`w-2 h-2 rounded-full bg-${subject.color} mr-2`} />
-              {subject.name}
+              <div 
+                className="w-2 h-2 rounded-full mr-2"
+                style={{ backgroundColor: resolveColor(topic.color) }}
+              />
+              {topic.name}
             </Button>
           ))}
         </div>
@@ -178,9 +229,21 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold">Today's Schedule</h3>
-          <Badge variant="secondary" className="bg-study-blue-light text-study-blue">
-            {tasks.length} tasks
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="bg-study-blue-light text-study-blue">
+              {tasks.length} tasks
+            </Badge>
+            {onAddTask && (
+              <Button 
+                size="sm" 
+                onClick={onAddTask} 
+                className="gap-2 bg-study-blue hover:bg-study-blue/90"
+              >
+                <Plus className="w-4 h-4" />
+                Add Task
+              </Button>
+            )}
+          </div>
         </div>
         
         <DndContext
@@ -188,13 +251,14 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+          <SortableContext items={sortedTasks} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
-              {tasks.map((task) => (
+              {sortedTasks.map((task) => (
                 <SortableTaskItem
                   key={task.id}
                   task={task}
                   onToggle={onTaskToggle}
+                  onClick={onTaskClick}
                 />
               ))}
             </div>
