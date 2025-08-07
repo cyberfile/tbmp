@@ -29,13 +29,14 @@ interface Task {
   id: string;
   title: string;
   subject: string;
+  topic: string;
   startTime: string;
   endTime: string;
   completed: boolean;
   color: string;
 }
 
-interface Subject {
+interface Topic {
   id: string;
   name: string;
   color: string;
@@ -44,18 +45,20 @@ interface Subject {
 
 interface TaskListProps {
   tasks: Task[];
-  subjects: Subject[];
+  topics: Topic[];
   selectedTopic: string;
   onTopicChange: (topic: string) => void;
   onTaskToggle: (taskId: string) => void;
+  onTaskClick: (task: Task) => void;
 }
 
 interface SortableTaskItemProps {
   task: Task;
   onToggle: (taskId: string) => void;
+  onClick: (task: Task) => void;
 }
 
-function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
+function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -79,6 +82,7 @@ function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
         "group cursor-move transition-all duration-200 hover:shadow-md border-0 shadow-sm",
         task.completed && "opacity-60 scale-[0.98]"
       )}
+      onClick={() => onClick(task)}
     >
       <div className="p-4">
         <div className="flex items-center gap-4">
@@ -102,7 +106,7 @@ function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
                 variant="secondary" 
                 className={`bg-${task.color}-light text-${task.color} border-0 px-2 py-1`}
               >
-                {task.subject}
+                {task.topic}
               </Badge>
               <span className="text-muted-foreground flex items-center gap-1">
                 <Clock className="w-3 h-3" />
@@ -118,7 +122,7 @@ function SortableTaskItem({ task, onToggle }: SortableTaskItemProps) {
   );
 }
 
-export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTaskToggle }: TaskListProps) {
+export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick }: TaskListProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -145,7 +149,7 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
     <div className="space-y-6">
       {/* Subject Filter */}
       <div className="flex items-center gap-3 flex-wrap p-4 bg-muted/30 rounded-xl">
-        <span className="text-sm font-semibold text-foreground">Filter by subject:</span>
+        <span className="text-sm font-semibold text-foreground">Filter by topic:</span>
         <div className="flex gap-2 flex-wrap">
           <Button
             size="sm"
@@ -153,22 +157,22 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
             onClick={() => onTopicChange("All")}
             className={selectedTopic === "All" ? "bg-study-blue hover:bg-study-blue/90" : ""}
           >
-            All Subjects
+            All Topics
           </Button>
-          {subjects.map((subject) => (
+          {topics.map((topic) => (
             <Button
-              key={subject.id}
+              key={topic.id}
               size="sm"
-              variant={selectedTopic === subject.name ? "default" : "secondary"}
-              onClick={() => onTopicChange(subject.name)}
+              variant={selectedTopic === topic.name ? "default" : "secondary"}
+              onClick={() => onTopicChange(topic.name)}
               className={
-                selectedTopic === subject.name
-                  ? `bg-${subject.color} hover:bg-${subject.color}/90 text-white shadow-sm`
+                selectedTopic === topic.name
+                  ? `bg-${topic.color} hover:bg-${topic.color}/90 text-white shadow-sm`
                   : "hover:bg-muted"
               }
             >
-              <div className={`w-2 h-2 rounded-full bg-${subject.color} mr-2`} />
-              {subject.name}
+              <div className={`w-2 h-2 rounded-full bg-${topic.color} mr-2`} />
+              {topic.name}
             </Button>
           ))}
         </div>
@@ -195,6 +199,7 @@ export function TaskList({ tasks, subjects, selectedTopic, onTopicChange, onTask
                   key={task.id}
                   task={task}
                   onToggle={onTaskToggle}
+                  onClick={onTaskClick}
                 />
               ))}
             </div>

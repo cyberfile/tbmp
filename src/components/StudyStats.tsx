@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Clock, Trophy, Target, TrendingUp } from "lucide-react";
 
-interface Subject {
+interface Topic {
   id: string;
   name: string;
   color: string;
@@ -13,11 +13,11 @@ interface Subject {
 interface StudyStatsProps {
   hoursStudied: number;
   totalHours: number;
-  subjects: Subject[];
+  topics: Topic[];
   lastQuizResult: number;
 }
 
-export function StudyStats({ hoursStudied, totalHours, subjects, lastQuizResult }: StudyStatsProps) {
+export function StudyStats({ hoursStudied, totalHours, topics, lastQuizResult }: StudyStatsProps) {
   const progressPercent = (hoursStudied / totalHours) * 100;
 
   return (
@@ -61,27 +61,27 @@ export function StudyStats({ hoursStudied, totalHours, subjects, lastQuizResult 
               <BookOpen className="w-5 h-5 text-study-green" />
             </div>
             <div>
-              <h3 className="font-semibold">Subject Progress</h3>
+              <h3 className="font-semibold">Topic Progress</h3>
               <p className="text-sm text-muted-foreground">Your learning journey</p>
             </div>
           </div>
           
           <div className="space-y-4">
-            {subjects.map((subject) => (
-              <div key={subject.id} className="space-y-3">
+            {topics.map((topic) => (
+              <div key={topic.id} className="space-y-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <div 
-                      className={`w-4 h-4 rounded-full bg-${subject.color}`}
+                      className={`w-4 h-4 rounded-full bg-${topic.color}`}
                     />
-                    <span className="font-medium">{subject.name}</span>
+                    <span className="font-medium">{topic.name}</span>
                   </div>
                   <Badge variant="secondary" className="bg-muted text-muted-foreground">
-                    {subject.progress}%
+                    {topic.progress}%
                   </Badge>
                 </div>
                 <Progress 
-                  value={subject.progress} 
+                  value={topic.progress} 
                   className="h-2"
                 />
               </div>

@@ -8,11 +8,12 @@ import { Brain, Calendar, Clock, Bell, Printer, Settings, User } from "lucide-re
 import { TaskList } from "./TaskList";
 import { WeeklyView } from "./WeeklyView";
 import { StudyStats } from "./StudyStats";
-import { SubjectManager } from "./SubjectManager";
+import { TopicManager } from "./TopicManager";
 import { NotificationSettings } from "./NotificationSettings";
 import { PrintableView } from "./PrintableView";
+import { NoteUpload } from "./NoteUpload";
 
-interface Subject {
+interface Topic {
   id: string;
   name: string;
   color: string;
@@ -23,23 +24,26 @@ interface Task {
   id: string;
   title: string;
   subject: string;
+  topic: string;
   startTime: string;
   endTime: string;
   completed: boolean;
   color: string;
 }
 
-const initialSubjects: Subject[] = [
-  { id: "1", name: "Cells", color: "study-purple", progress: 75 },
-  { id: "2", name: "Algebra", color: "study-orange", progress: 60 },
-  { id: "3", name: "Python", color: "study-green", progress: 40 },
+const initialTopics: Topic[] = [
+  { id: "1", name: "Topic 1", color: "study-purple", progress: 75 },
+  { id: "2", name: "Topic 2", color: "study-orange", progress: 60 },
+  { id: "3", name: "Topic 3", color: "study-green", progress: 40 },
+  { id: "4", name: "Topic 4", color: "study-blue", progress: 20 },
 ];
 
 const initialTasks: Task[] = [
   {
     id: "1",
-    title: "Cell Functions",
-    subject: "Cells",
+    title: "Introduction to Fundamentals",
+    subject: "Mathematics",
+    topic: "Topic 1",
     startTime: "1:00 pm",
     endTime: "2:00pm",
     completed: false,
@@ -47,49 +51,56 @@ const initialTasks: Task[] = [
   },
   {
     id: "2",
-    title: "Booleans",
-    subject: "Python",
-    startTime: "7:00 pm",
-    endTime: "8:00pm",
+    title: "Basic Concepts Review",
+    subject: "Mathematics",
+    topic: "Topic 2",
+    startTime: "2:30 pm",
+    endTime: "3:15pm",
     completed: false,
     color: "study-orange",
   },
   {
     id: "3",
-    title: "Exponential Functions",
-    subject: "Algebra",
-    startTime: "2:30 pm",
-    endTime: "3:15pm",
+    title: "Advanced Methods",
+    subject: "Mathematics",
+    topic: "Topic 3",
+    startTime: "4:00 pm",
+    endTime: "4:30pm",
     completed: false,
     color: "study-green",
   },
   {
     id: "4",
-    title: "Cell Quiz",
-    subject: "Cells",
-    startTime: "4:00 pm",
-    endTime: "4:30pm",
+    title: "Problem Solving",
+    subject: "Mathematics",
+    topic: "Topic 1",
+    startTime: "6:00 pm",
+    endTime: "6:30pm",
     completed: false,
     color: "study-purple",
   },
   {
     id: "5",
-    title: "Graphing",
-    subject: "Algebra",
-    startTime: "6:00 pm",
-    endTime: "6:30pm",
+    title: "Practice Questions",
+    subject: "Mathematics",
+    topic: "Topic 4",
+    startTime: "7:00 pm",
+    endTime: "8:00pm",
     completed: false,
-    color: "study-green",
+    color: "study-blue",
   },
 ];
 
 export function StudyPlanner() {
   const [view, setView] = useState<"daily" | "weekly">("daily");
-  const [subjects] = useState<Subject[]>(initialSubjects);
+  const [topics, setTopics] = useState<Topic[]>(initialTopics);
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTopic, setSelectedTopic] = useState("All");
+  const [showTopicManager, setShowTopicManager] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showPrintView, setShowPrintView] = useState(false);
+  const [showNoteUpload, setShowNoteUpload] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [printViewType, setPrintViewType] = useState<"weekly" | "monthly">("weekly");
 
   const hoursStudiedToday = 4;
@@ -106,7 +117,12 @@ export function StudyPlanner() {
 
   const filteredTasks = selectedTopic === "All" 
     ? tasks 
-    : tasks.filter(task => task.subject === selectedTopic);
+    : tasks.filter(task => task.topic === selectedTopic);
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setShowNoteUpload(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -140,37 +156,41 @@ export function StudyPlanner() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Hero Section */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl font-bold leading-tight">
-            <span className="bg-gradient-to-r from-study-blue to-study-purple bg-clip-text text-transparent">
-              AI-Powered
-            </span>{" "}
-            Study Planner
-            <br />
-            <span className="text-foreground">For The Future</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Experience the next generation of learning with our AI-powered platform. Personalized 
-            study plans, intelligent tools, and adaptive assessments to help you achieve your goals.
-          </p>
-          <div className="flex items-center justify-center gap-4 pt-4">
+        {/* Page Title */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Mathematics Study Planner</h1>
+            <p className="text-muted-foreground mt-1">
+              Organized by topics for focused learning
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
             <Button 
-              size="lg" 
-              className="gap-2 bg-study-blue hover:bg-study-blue/90"
-              onClick={() => setShowNotifications(true)}
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => setShowTopicManager(true)}
             >
-              <Bell className="w-4 h-4" />
-              Set Reminders
+              <Settings className="w-4 h-4" />
+              Manage Topics
             </Button>
             <Button 
               variant="outline" 
-              size="lg" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => setShowNotifications(true)}
+            >
+              <Bell className="w-4 h-4" />
+              Notifications
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
               className="gap-2"
               onClick={() => setShowPrintView(true)}
             >
               <Printer className="w-4 h-4" />
-              Export Schedule
+              Export
             </Button>
           </div>
         </div>
@@ -182,7 +202,7 @@ export function StudyPlanner() {
             <StudyStats 
               hoursStudied={hoursStudiedToday}
               totalHours={totalHoursGoal}
-              subjects={subjects}
+              topics={topics}
               lastQuizResult={lastQuizResult}
             />
           </div>
@@ -207,25 +227,35 @@ export function StudyPlanner() {
                     </TabsList>
                   </div>
 
-                  <TabsContent value="daily" className="space-y-6 mt-0">
-                    <TaskList 
-                      tasks={filteredTasks}
-                      subjects={subjects}
-                      selectedTopic={selectedTopic}
-                      onTopicChange={setSelectedTopic}
-                      onTaskToggle={toggleTaskCompletion}
-                    />
-                  </TabsContent>
+              <TabsContent value="daily" className="space-y-6 mt-0">
+                <TaskList 
+                  tasks={filteredTasks}
+                  topics={topics}
+                  selectedTopic={selectedTopic}
+                  onTopicChange={setSelectedTopic}
+                  onTaskToggle={toggleTaskCompletion}
+                  onTaskClick={handleTaskClick}
+                />
+              </TabsContent>
 
-                  <TabsContent value="weekly" className="space-y-6 mt-0">
-                    <WeeklyView tasks={tasks} subjects={subjects} />
-                  </TabsContent>
+              <TabsContent value="weekly" className="space-y-6 mt-0">
+                <WeeklyView tasks={tasks} topics={topics} onTaskClick={handleTaskClick} />
+              </TabsContent>
                 </Tabs>
               </div>
             </Card>
           </div>
         </div>
       </div>
+
+      {/* Topic Manager Modal */}
+      {showTopicManager && (
+        <TopicManager
+          topics={topics}
+          onTopicsChange={setTopics}
+          onClose={() => setShowTopicManager(false)}
+        />
+      )}
 
       {/* Notification Settings Modal */}
       {showNotifications && (
@@ -238,9 +268,21 @@ export function StudyPlanner() {
       {showPrintView && (
         <PrintableView
           tasks={tasks}
-          subjects={subjects}
+          topics={topics}
           viewType={printViewType}
           onClose={() => setShowPrintView(false)}
+        />
+      )}
+
+      {/* Note Upload Modal */}
+      {showNoteUpload && selectedTask && (
+        <NoteUpload
+          topicName={selectedTask.topic}
+          taskTitle={selectedTask.title}
+          onClose={() => {
+            setShowNoteUpload(false);
+            setSelectedTask(null);
+          }}
         />
       )}
     </div>

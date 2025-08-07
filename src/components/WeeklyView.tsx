@@ -4,14 +4,14 @@ import { Badge } from "@/components/ui/badge";
 interface Task {
   id: string;
   title: string;
-  subject: string;
+  topic: string;
   startTime: string;
   endTime: string;
   completed: boolean;
   color: string;
 }
 
-interface Subject {
+interface Topic {
   id: string;
   name: string;
   color: string;
@@ -20,12 +20,13 @@ interface Subject {
 
 interface WeeklyViewProps {
   tasks: Task[];
-  subjects: Subject[];
+  topics: Topic[];
+  onTaskClick: (task: Task) => void;
 }
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export function WeeklyView({ tasks, subjects }: WeeklyViewProps) {
+export function WeeklyView({ tasks, topics, onTaskClick }: WeeklyViewProps) {
   const getColorClasses = (color: string) => {
     switch (color) {
       case "study-purple":
@@ -62,19 +63,19 @@ export function WeeklyView({ tasks, subjects }: WeeklyViewProps) {
                   {day}
                 </div>
                 <div className="space-y-2 min-h-[200px]">
-                  {dayTasks.map((task) => (
-                    <div
-                      key={`${day}-${task.id}`}
-                      className={`p-3 rounded-md text-sm ${getColorClasses(task.color)} ${
-                        task.completed ? "opacity-60 line-through" : ""
-                      }`}
+                   {dayTasks.map((task) => (
+                    <div 
+                      key={task.id}
+                      className="p-3 rounded-md border-l-4 bg-card hover:shadow-sm transition-shadow cursor-pointer"
+                      style={{ borderLeftColor: `hsl(var(--${task.color}))` }}
+                      onClick={() => onTaskClick(task)}
                     >
-                      <div className="font-medium">{task.title}</div>
-                      <div className="text-xs opacity-90">
-                        {task.startTime} - {task.endTime}
+                      <div className="text-sm font-medium">{task.title}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {task.topic} • {task.startTime}
                       </div>
                       <Badge variant="secondary" className="mt-1 text-xs">
-                        {task.subject}
+                        {task.topic}
                       </Badge>
                     </div>
                   ))}
