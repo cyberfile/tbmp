@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Brain, Calendar, Clock, Bell, Printer, Settings, User } from "lucide-react";
+import { Brain, Calendar, Clock, Bell, Printer, Settings, LogOut } from "lucide-react";
 import { TaskList } from "./TaskList";
 import { WeeklyView } from "./WeeklyView";
 import { StudyStats } from "./StudyStats";
@@ -172,7 +172,9 @@ export function StudyPlanner() {
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground hidden sm:block">aly</span>
               <Button variant="outline" size="sm" className="gap-2">
-                <User className="w-4 h-4" />
+                <span className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground w-5 h-5">
+                  <LogOut className="w-3.5 h-3.5" />
+                </span>
                 Sign Out
               </Button>
             </div>
