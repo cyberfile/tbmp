@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -59,6 +60,7 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
     setNodeRef,
     transform,
     transition,
+    isDragging,
   } = useSortable({ id: task.id });
 
   const style = {
@@ -71,7 +73,7 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className="p-3 rounded-md border-l-4 bg-card hover:shadow-sm transition-shadow cursor-pointer"
+      className={`p-3 rounded-md border-l-4 bg-card hover:shadow-sm transition-shadow cursor-pointer ${isDragging ? 'shadow-lg ring-2 ring-study-blue/40' : ''}`}
       style={{ 
         borderLeftColor: `hsl(var(--${task.color}))`,
         ...style
@@ -96,6 +98,15 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
   );
 }
 
+function DayColumn({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className={`rounded-md p-1 ${isOver ? 'ring-2 ring-study-blue/40' : ''}`}>
+      {children}
+    </div>
+  );
+}
+
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReorder }: WeeklyViewProps) {
@@ -106,22 +117,75 @@ export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReord
     useSensor(KeyboardSensor)
   );
 
+  const tasksById = useMemo(() => {
+    const map: Record<string, Task> = {};
+    tasks.forEach((t) => { map[t.id] = t; });
+    return map;
+  }, [tasks]);
+
+  const [columns, setColumns] = useState<Record<number, string[]>>(() => {
+    const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+    tasks.forEach((t, i) => { cols[i % 7].push(t.id); });
+    return cols;
+  });
+
+  useEffect(() => {
+    const allIds = tasks.map(t => t.id);
+    const existing = new Set(Object.values(columns).flat());
+    const toAdd = allIds.filter(id => !existing.has(id));
+    if (toAdd.length) {
+      setColumns(prev => ({ ...prev, 0: [...prev[0], ...toAdd] }));
+    }
+  }, [tasks]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    if (!over) return;
 
-    if (active.id !== over?.id) {
-      setSortedTasks((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over?.id);
-        const newTasks = arrayMove(items, oldIndex, newIndex);
-        
-        if (onTasksReorder) {
-          onTasksReorder(newTasks);
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    setColumns((cols) => {
+      const findContainer = (id: string): number | undefined => {
+        const keys = Object.keys(cols).map(Number);
+        return keys.find((day) => cols[day].includes(id));
+      };
+
+      const sourceDay = findContainer(activeId);
+      const targetDay = overId.startsWith('day-') ? Number(overId.split('-')[1]) : findContainer(overId);
+      if (sourceDay === undefined || targetDay === undefined) return cols;
+
+      if (sourceDay === targetDay) {
+        const ids = cols[sourceDay];
+        const oldIndex = ids.indexOf(activeId);
+        const newIndex = overId.startsWith('day-') ? ids.length - 1 : ids.indexOf(overId);
+        if (oldIndex !== newIndex) {
+          const newIds = arrayMove(ids, oldIndex, newIndex);
+          const updated = { ...cols, [sourceDay]: newIds };
+          if (onTasksReorder) {
+            const orderedTasks = Object.values(updated).flat().map((id) => tasksById[id]);
+            onTasksReorder(orderedTasks);
+          }
+          return updated;
         }
-        
-        return newTasks;
-      });
-    }
+        return cols;
+      } else {
+        const next = { ...cols };
+        next[sourceDay] = next[sourceDay].filter((id) => id !== activeId);
+        const targetIds = next[targetDay];
+        const insertIndex = overId.startsWith('day-') ? targetIds.length : targetIds.indexOf(overId);
+        next[targetDay] = [
+          ...targetIds.slice(0, insertIndex),
+          activeId,
+          ...targetIds.slice(insertIndex),
+        ];
+        if (onTasksReorder) {
+          const orderedTasks = Object.values(next).flat().map((id) => tasksById[id]);
+          onTasksReorder(orderedTasks);
+        }
+        return next;
+      }
+    });
   };
   const getColorClasses = (color: string) => {
     switch (color) {
@@ -138,9 +202,9 @@ export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReord
     }
   };
 
-  // For demo purposes, distribute tasks across the week
   const getTasksForDay = (dayIndex: number) => {
-    return sortedTasks.filter((_, index) => index % 7 === dayIndex);
+    const ids = columns[dayIndex] || [];
+    return ids.map((id) => tasksById[id]).filter(Boolean);
   };
 
   return (
@@ -175,22 +239,24 @@ export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReord
                   <div className="font-medium text-sm text-center py-2 bg-secondary rounded-md">
                     {day}
                   </div>
-                  <SortableContext items={dayTasks} strategy={rectSortingStrategy}>
-                    <div className="space-y-2 min-h-[200px]">
-                      {dayTasks.map((task) => (
-                        <SortableTask
-                          key={task.id}
-                          task={task}
-                          onTaskClick={onTaskClick}
-                        />
-                      ))}
-                      {dayTasks.length === 0 && (
-                        <div className="text-muted-foreground text-sm text-center py-8">
-                          No tasks scheduled
-                        </div>
-                      )}
-                    </div>
-                  </SortableContext>
+                  <DayColumn id={`day-${index}`}>
+                    <SortableContext items={columns[index] ?? []} strategy={rectSortingStrategy}>
+                      <div className="space-y-2 min-h-[200px]">
+                        {dayTasks.map((task) => (
+                          <SortableTask
+                            key={task.id}
+                            task={task}
+                            onTaskClick={onTaskClick}
+                          />
+                        ))}
+                        {dayTasks.length === 0 && (
+                          <div className="text-muted-foreground text-sm text-center py-8">
+                            Drop tasks here
+                          </div>
+                        )}
+                      </div>
+                    </SortableContext>
+                  </DayColumn>
                 </div>
               );
             })}

@@ -11,6 +11,7 @@ interface Task {
   endTime: string;
   completed: boolean;
   color: string;
+  reminderMinutesBefore?: number;
 }
 
 interface Topic {

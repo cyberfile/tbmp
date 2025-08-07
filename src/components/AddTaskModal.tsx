@@ -22,6 +22,7 @@ interface Task {
   endTime: string;
   completed: boolean;
   color: string;
+  reminderMinutesBefore?: number;
 }
 
 interface AddTaskModalProps {
@@ -52,6 +53,7 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModa
       startTime,
       endTime,
       color: topic.color,
+      reminderMinutesBefore: 60,
     });
 
     // Reset form
@@ -126,6 +128,8 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModa
               />
             </div>
           </div>
+
+          <p className="text-xs text-muted-foreground">Reminder: 1 hour before</p>
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>

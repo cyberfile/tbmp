@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,13 @@ interface EditGoalsModalProps {
 export function EditGoalsModal({ isOpen, onClose, dailyGoal, weeklyGoal, onUpdateGoals }: EditGoalsModalProps) {
   const [newDailyGoal, setNewDailyGoal] = useState(dailyGoal.toString());
   const [newWeeklyGoal, setNewWeeklyGoal] = useState(weeklyGoal.toString());
+
+  useEffect(() => {
+    if (isOpen) {
+      setNewDailyGoal(dailyGoal.toString());
+      setNewWeeklyGoal(weeklyGoal.toString());
+    }
+  }, [isOpen, dailyGoal, weeklyGoal]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +44,7 @@ export function EditGoalsModal({ isOpen, onClose, dailyGoal, weeklyGoal, onUpdat
             <Target className="w-5 h-5" />
             Edit Study Goals
           </DialogTitle>
+          <DialogDescription>Update your daily and weekly hour goals.</DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -66,6 +66,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
     setNodeRef,
     transform,
     transition,
+    isDragging,
   } = useSortable({ id: task.id });
 
   const style = {
@@ -76,11 +77,12 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   return (
     <Card 
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, borderLeftColor: `hsl(var(--${task.color}))` }}
       {...attributes}
       {...listeners}
       className={cn(
-        "group cursor-move transition-all duration-200 hover:shadow-md border-0 shadow-sm",
+        "group cursor-move transition-all duration-200 hover:shadow-md border-0 shadow-sm border-l-4",
+        isDragging && "ring-2 ring-study-blue/40",
         task.completed && "opacity-60 scale-[0.98]"
       )}
       onClick={() => onClick(task)}
@@ -139,6 +141,10 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  useEffect(() => {
+    setSortedTasks(tasks);
+  }, [tasks]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -220,9 +226,9 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+          <SortableContext items={sortedTasks} strategy={verticalListSortingStrategy}>
             <div className="space-y-3">
-              {tasks.map((task) => (
+              {sortedTasks.map((task) => (
                 <SortableTaskItem
                   key={task.id}
                   task={task}
