@@ -25,6 +25,13 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Calendar, Clock, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const resolveColor = (c?: string) => {
+  if (!c) return undefined;
+  const v = c.trim();
+  if (v.startsWith('#') || v.startsWith('rgb') || v.startsWith('hsl(')) return v;
+  return `hsl(var(--${v}))`;
+};
+
 interface Task {
   id: string;
   title: string;
@@ -77,11 +84,11 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   return (
     <Card 
       ref={setNodeRef}
-      style={{ ...style, borderLeftColor: `hsl(var(--${task.color}))` }}
+      style={{ ...style, borderLeftColor: resolveColor(task.color) }}
       {...attributes}
       {...listeners}
       className={cn(
-        "group cursor-move transition-all duration-200 hover:shadow-md border-0 shadow-sm border-l-4",
+        "group cursor-move transition-all duration-200 hover:shadow-md border border-border shadow-sm border-l-4",
         isDragging && "ring-2 ring-study-blue/40",
         task.completed && "opacity-60 scale-[0.98]"
       )}
@@ -97,7 +104,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
           
           <div 
             className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
-            style={{ backgroundColor: `hsl(var(--${task.color}))` }}
+            style={{ backgroundColor: resolveColor(task.color) }}
           />
           
           <div className="flex-1 min-w-0">
@@ -112,7 +119,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
                 variant="secondary" 
                 className="text-xs px-2 py-1"
                 style={{ 
-                  backgroundColor: `hsl(var(--${task.color}))`,
+                  backgroundColor: resolveColor(task.color),
                   color: 'white'
                 }}
               >
@@ -186,13 +193,13 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
                 }
                 style={
                   selectedTopic === topic.name 
-                    ? { backgroundColor: `hsl(var(--${topic.color}))` }
+                    ? { backgroundColor: resolveColor(topic.color) }
                     : undefined
                 }
             >
               <div 
                 className="w-2 h-2 rounded-full mr-2"
-                style={{ backgroundColor: `hsl(var(--${topic.color}))` }}
+                style={{ backgroundColor: resolveColor(topic.color) }}
               />
               {topic.name}
             </Button>

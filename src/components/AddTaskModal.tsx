@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,12 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModa
   const [selectedTopic, setSelectedTopic] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [color, setColor] = useState<string>("");
+
+  useEffect(() => {
+    const t = topics.find((tt) => tt.name === selectedTopic);
+    if (t) setColor(t.color);
+  }, [selectedTopic, topics]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +58,7 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModa
       topic: selectedTopic,
       startTime,
       endTime,
-      color: topic.color,
+      color: color || topic.color,
       reminderMinutesBefore: 60,
     });
 
@@ -96,13 +102,32 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModa
                 {topics.map((topic) => (
                   <SelectItem key={topic.id} value={topic.name}>
                     <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full bg-${topic.color}`} />
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: `hsl(var(--${topic.color}))` }} />
                       {topic.name}
                     </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="color">Task Color</Label>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-4 h-4 rounded-full border"
+                style={{ backgroundColor: color ? (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl(') ? color : `hsl(var(--${color}))`) : 'transparent' }}
+              />
+              <input
+                id="color"
+                type="color"
+                value={color && (color.startsWith('#')) ? color : "#3b82f6"}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-9 w-10 bg-transparent border rounded-md cursor-pointer"
+                aria-label="Pick custom color"
+              />
+              <span className="text-xs text-muted-foreground">Defaults to topic color; pick a custom color if you want.</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

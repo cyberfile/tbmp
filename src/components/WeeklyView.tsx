@@ -23,6 +23,13 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+const resolveColor = (c?: string) => {
+  if (!c) return undefined;
+  const v = c.trim();
+  if (v.startsWith('#') || v.startsWith('rgb') || v.startsWith('hsl(')) return v;
+  return `hsl(var(--${v}))`;
+};
+
 interface Task {
   id: string;
   title: string;
@@ -73,9 +80,9 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={`p-3 rounded-md border-l-4 bg-card hover:shadow-sm transition-shadow cursor-pointer ${isDragging ? 'shadow-lg ring-2 ring-study-blue/40' : ''}`}
+      className={`p-3 rounded-md border border-border border-l-4 bg-card hover:shadow-sm transition-shadow cursor-pointer ${isDragging ? 'shadow-lg ring-2 ring-study-blue/40 scale-[1.02]' : ''}`}
       style={{ 
-        borderLeftColor: `hsl(var(--${task.color}))`,
+        borderLeftColor: resolveColor(task.color),
         ...style
       }}
       onClick={() => onTaskClick(task)}
@@ -88,7 +95,7 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
         variant="secondary" 
         className="mt-1 text-xs"
         style={{ 
-          backgroundColor: `hsl(var(--${task.color}))`,
+          backgroundColor: resolveColor(task.color),
           color: 'white'
         }}
       >
@@ -101,7 +108,7 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
 function DayColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
   return (
-    <div ref={setNodeRef} className={`rounded-md p-1 ${isOver ? 'ring-2 ring-study-blue/40' : ''}`}>
+    <div ref={setNodeRef} className={`rounded-md p-1 min-h-[220px] ${isOver ? 'ring-2 ring-study-blue/40' : 'border border-dashed border-border/60'}`}>
       {children}
     </div>
   );
