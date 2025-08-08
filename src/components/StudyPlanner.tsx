@@ -171,8 +171,8 @@ export function StudyPlanner() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground hidden sm:block">aly</span>
-              <Button variant="outline" size="sm" className="gap-2">
-                <span className="inline-flex items-center justify-center rounded-md bg-accent text-accent-foreground w-5 h-5">
+              <Button variant="outline" size="sm" className="gap-2 border-primary text-primary bg-transparent hover:bg-primary/10">
+                <span className="inline-flex items-center justify-center rounded-md w-5 h-5 border border-primary text-primary bg-transparent">
                   <LogOut className="w-3.5 h-3.5" />
                 </span>
                 Sign Out
