@@ -141,16 +141,24 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                         title={color.name}
                       />
                     ))}
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={selectedColor.startsWith('#') ? selectedColor : '#3b82f6'}
-                        onChange={(e) => setSelectedColor(e.target.value)}
-                        className="h-8 w-10 rounded-md border bg-transparent cursor-pointer"
-                        aria-label="Custom color"
-                      />
-                      <span className="text-xs text-muted-foreground">Custom</span>
-                    </div>
+<div className="flex items-center gap-2">
+  <label
+    htmlFor="new-topic-custom-color"
+    className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:bg-muted/50"
+    title="Custom color"
+  >
+    <Plus className="w-4 h-4 text-muted-foreground" />
+  </label>
+  <input
+    id="new-topic-custom-color"
+    type="color"
+    value={selectedColor.startsWith('#') ? selectedColor : '#3b82f6'}
+    onChange={(e) => setSelectedColor(e.target.value)}
+    className="sr-only"
+    aria-label="Custom color"
+  />
+  <span className="text-xs text-muted-foreground">Custom</span>
+</div>
                   </div>
                 </div>
 
@@ -206,7 +214,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                       <span>Progress</span>
                       <span>{topic.progress}%</span>
                     </div>
-                    <Progress value={topic.progress} className="h-2" />
+<Progress value={topic.progress} className="h-2 [&>div]:bg-[var(--bar-color)]" style={{ ['--bar-color' as any]: resolveColor(topic.color) }} />
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -265,16 +273,24 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                         }`}
                       />
                     ))}
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={editingTopic.color.startsWith('#') ? editingTopic.color : '#3b82f6'}
-                        onChange={(e) => setEditingTopic({ ...editingTopic, color: e.target.value })}
-                        className="h-8 w-10 rounded-md border bg-transparent cursor-pointer"
-                        aria-label="Custom color"
-                      />
-                      <span className="text-xs text-muted-foreground">Custom</span>
-                    </div>
+<div className="flex items-center gap-2">
+  <label
+    htmlFor="edit-topic-custom-color"
+    className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:bg-muted/50"
+    title="Custom color"
+  >
+    <Plus className="w-4 h-4 text-muted-foreground" />
+  </label>
+  <input
+    id="edit-topic-custom-color"
+    type="color"
+    value={editingTopic.color.startsWith('#') ? editingTopic.color : '#3b82f6'}
+    onChange={(e) => setEditingTopic({ ...editingTopic, color: e.target.value })}
+    className="sr-only"
+    aria-label="Custom color"
+  />
+  <span className="text-xs text-muted-foreground">Custom</span>
+</div>
                   </div>
                 </div>
 

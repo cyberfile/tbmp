@@ -34,6 +34,7 @@ interface Task {
   completed: boolean;
   color: string;
   reminderMinutesBefore?: number;
+  dayIndex?: number;
 }
 
 const initialTopics: Topic[] = [
@@ -49,50 +50,55 @@ const initialTasks: Task[] = [
     title: "Introduction to Fundamentals",
     subject: "Mathematics",
     topic: "Topic 1",
-    startTime: "1:00 pm",
-    endTime: "2:00pm",
+    startTime: "13:00",
+    endTime: "14:00",
     completed: false,
     color: "study-purple",
+    dayIndex: 0,
   },
   {
     id: "2",
     title: "Basic Concepts Review",
     subject: "Mathematics",
     topic: "Topic 2",
-    startTime: "2:30 pm",
-    endTime: "3:15pm",
+    startTime: "14:30",
+    endTime: "15:15",
     completed: false,
     color: "study-orange",
+    dayIndex: 1,
   },
   {
     id: "3",
     title: "Advanced Methods",
     subject: "Mathematics",
     topic: "Topic 3",
-    startTime: "4:00 pm",
-    endTime: "4:30pm",
+    startTime: "16:00",
+    endTime: "16:30",
     completed: false,
     color: "study-green",
+    dayIndex: 2,
   },
   {
     id: "4",
     title: "Problem Solving",
     subject: "Mathematics",
     topic: "Topic 1",
-    startTime: "6:00 pm",
-    endTime: "6:30pm",
+    startTime: "18:00",
+    endTime: "18:30",
     completed: false,
     color: "study-purple",
+    dayIndex: 3,
   },
   {
     id: "5",
     title: "Practice Questions",
     subject: "Mathematics",
     topic: "Topic 4",
-    startTime: "7:00 pm",
-    endTime: "8:00pm",
+    startTime: "19:00",
+    endTime: "20:00",
     completed: false,
     color: "study-blue",
+    dayIndex: 4,
   },
 ];
 
@@ -117,6 +123,9 @@ export function StudyPlanner() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
+  const mondayBasedToday = (new Date().getDay() + 6) % 7; // 0 = Monday
+  const [selectedDay, setSelectedDay] = useState<number>(mondayBasedToday);
+
   const hoursStudiedToday = 4;
   const [totalHoursGoal, setTotalHoursGoal] = useState(5);
   const lastQuizResult = 70;
@@ -128,32 +137,38 @@ export function StudyPlanner() {
     ));
   };
 
-  const filteredTasks = selectedTopic === "All" 
-    ? tasks 
-    : tasks.filter(task => task.topic === selectedTopic);
+const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
+const filteredTasks = selectedTopic === "All" 
+  ? tasksForDay 
+  : tasksForDay.filter(task => task.topic === selectedTopic);
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     setShowNoteUpload(true);
   };
 
-  const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
-    const task: Task = {
-      ...newTask,
-      id: Date.now().toString(),
-      completed: false,
-    };
-    setTasks([...tasks, task]);
+const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
+  const task: Task = {
+    ...newTask,
+    id: Date.now().toString(),
+    completed: false,
+    dayIndex: selectedDay,
   };
+  setTasks([...tasks, task]);
+};
 
   const handleUpdateGoals = (daily: number, weekly: number) => {
     setTotalHoursGoal(daily);
     setWeeklyGoal(weekly);
   };
 
-  const handleTasksReorder = (reorderedTasks: Task[]) => {
-    setTasks(reorderedTasks);
-  };
+const handleTasksReorder = (reorderedTasks: Task[]) => {
+  setTasks(reorderedTasks);
+};
+
+const handleTaskDayChange = (taskId: string, dayIndex: number) => {
+  setTasks(prev => prev.map(t => t.id === taskId ? { ...t, dayIndex } : t));
+};
 
   return (
     <div className="min-h-screen bg-background">
@@ -295,27 +310,41 @@ export function StudyPlanner() {
                     </TabsList>
                   </div>
 
-              <TabsContent value="daily" className="space-y-6 mt-0">
-                <TaskList 
-                  tasks={filteredTasks}
-                  topics={topics}
-                  selectedTopic={selectedTopic}
-                  onTopicChange={setSelectedTopic}
-                  onTaskToggle={toggleTaskCompletion}
-                  onTaskClick={handleTaskClick}
-                  onAddTask={() => setShowAddTask(true)}
-                />
-              </TabsContent>
+<TabsContent value="daily" className="space-y-6 mt-0">
+  <div className="flex items-center gap-2 flex-wrap mb-2">
+    {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
+      <Button
+        key={d}
+        size="sm"
+        variant={selectedDay === i ? 'default' : 'secondary'}
+        onClick={() => setSelectedDay(i)}
+        className={selectedDay === i ? 'bg-study-blue hover:bg-study-blue/90' : ''}
+      >
+        {d}
+      </Button>
+    ))}
+  </div>
+  <TaskList 
+    tasks={filteredTasks}
+    topics={topics}
+    selectedTopic={selectedTopic}
+    onTopicChange={setSelectedTopic}
+    onTaskToggle={toggleTaskCompletion}
+    onTaskClick={handleTaskClick}
+    onAddTask={() => setShowAddTask(true)}
+  />
+</TabsContent>
 
-              <TabsContent value="weekly" className="space-y-6 mt-0">
-                <WeeklyView 
-                  tasks={tasks} 
-                  topics={topics} 
-                  onTaskClick={handleTaskClick}
-                  onAddTask={() => setShowAddTask(true)}
-                  onTasksReorder={handleTasksReorder}
-                />
-              </TabsContent>
+<TabsContent value="weekly" className="space-y-6 mt-0">
+  <WeeklyView 
+    tasks={tasks} 
+    topics={topics} 
+    onTaskClick={handleTaskClick}
+    onAddTask={() => setShowAddTask(true)}
+    onTasksReorder={handleTasksReorder}
+    onTaskDayChange={handleTaskDayChange}
+  />
+</TabsContent>
                 </Tabs>
               </div>
             </Card>

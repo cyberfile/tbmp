@@ -32,6 +32,17 @@ const resolveColor = (c?: string) => {
   return `hsl(var(--${v}))`;
 };
 
+const to12h = (time: string) => {
+  if (!time) return time;
+  const t = time.trim();
+  if (/am|pm/i.test(t)) return t.replace(/\s?(am|pm)/i, ' $1').toLowerCase();
+  const [h, m = '00'] = t.split(':');
+  let hh = parseInt(h || '0', 10);
+  const ampm = hh >= 12 ? 'pm' : 'am';
+  hh = hh % 12; if (hh === 0) hh = 12;
+  return `${hh}:${m.padStart(2, '0')} ${ampm}`;
+};
+
 interface Task {
   id: string;
   title: string;
@@ -127,7 +138,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
               </Badge>
               <span className="text-muted-foreground flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {task.startTime} - {task.endTime}
+                {to12h(task.startTime)} - {to12h(task.endTime)}
               </span>
             </div>
           </div>

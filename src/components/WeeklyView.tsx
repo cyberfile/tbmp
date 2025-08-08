@@ -30,6 +30,17 @@ const resolveColor = (c?: string) => {
   return `hsl(var(--${v}))`;
 };
 
+const to12h = (time: string) => {
+  if (!time) return time;
+  const t = time.trim();
+  if (/am|pm/i.test(t)) return t.replace(/\s?(am|pm)/i, ' $1').toLowerCase();
+  const [h, m = '00'] = t.split(':');
+  let hh = parseInt(h || '0', 10);
+  const ampm = hh >= 12 ? 'pm' : 'am';
+  hh = hh % 12; if (hh === 0) hh = 12;
+  return `${hh}:${m.padStart(2, '0')} ${ampm}`;
+};
+
 interface Task {
   id: string;
   title: string;
@@ -38,6 +49,7 @@ interface Task {
   endTime: string;
   completed: boolean;
   color: string;
+  dayIndex?: number;
 }
 
 interface Topic {
@@ -53,6 +65,7 @@ interface WeeklyViewProps {
   onTaskClick: (task: Task) => void;
   onAddTask?: () => void;
   onTasksReorder?: (tasks: Task[]) => void;
+  onTaskDayChange?: (taskId: string, dayIndex: number) => void;
 }
 
 interface SortableTaskProps {
@@ -89,7 +102,7 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
     >
       <div className="text-sm font-medium">{task.title}</div>
       <div className="text-xs text-muted-foreground mt-1">
-        {task.topic} • {task.startTime}
+        {task.topic} • {to12h(task.startTime)}
       </div>
       <Badge 
         variant="secondary" 
@@ -116,7 +129,7 @@ function DayColumn({ id, children }: { id: string; children: React.ReactNode }) 
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReorder }: WeeklyViewProps) {
+export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReorder, onTaskDayChange }: WeeklyViewProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -130,20 +143,17 @@ export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReord
     return map;
   }, [tasks]);
 
-  const [columns, setColumns] = useState<Record<number, string[]>>(() => {
-    const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
-    tasks.forEach((t, i) => { cols[i % 7].push(t.id); });
-    return cols;
-  });
+const [columns, setColumns] = useState<Record<number, string[]>>(() => {
+  const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+  tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
+  return cols;
+});
 
-  useEffect(() => {
-    const allIds = tasks.map(t => t.id);
-    const existing = new Set(Object.values(columns).flat());
-    const toAdd = allIds.filter(id => !existing.has(id));
-    if (toAdd.length) {
-      setColumns(prev => ({ ...prev, 0: [...prev[0], ...toAdd] }));
-    }
-  }, [tasks]);
+useEffect(() => {
+  const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+  tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
+  setColumns(cols);
+}, [tasks]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -174,25 +184,28 @@ export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReord
             onTasksReorder(orderedTasks);
           }
           return updated;
+          }
+          return cols;
+        } else {
+          const next = { ...cols };
+          next[sourceDay] = next[sourceDay].filter((id) => id !== activeId);
+          const targetIds = next[targetDay];
+          const insertIndex = overId.startsWith('day-') ? targetIds.length : targetIds.indexOf(overId);
+          next[targetDay] = [
+            ...targetIds.slice(0, insertIndex),
+            activeId,
+            ...targetIds.slice(insertIndex),
+          ];
+          if (onTasksReorder) {
+            const orderedTasks = Object.values(next).flat().map((id) => tasksById[id]);
+            onTasksReorder(orderedTasks);
+          }
+          if (onTaskDayChange) {
+            onTaskDayChange(activeId, targetDay);
+          }
+          return next;
         }
-        return cols;
-      } else {
-        const next = { ...cols };
-        next[sourceDay] = next[sourceDay].filter((id) => id !== activeId);
-        const targetIds = next[targetDay];
-        const insertIndex = overId.startsWith('day-') ? targetIds.length : targetIds.indexOf(overId);
-        next[targetDay] = [
-          ...targetIds.slice(0, insertIndex),
-          activeId,
-          ...targetIds.slice(insertIndex),
-        ];
-        if (onTasksReorder) {
-          const orderedTasks = Object.values(next).flat().map((id) => tasksById[id]);
-          onTasksReorder(orderedTasks);
-        }
-        return next;
-      }
-    });
+      });
   };
   const getColorClasses = (color: string) => {
     switch (color) {
