@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,12 +92,6 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
     });
   };
 
-  const updateProgress = (topicId: string, progress: number) => {
-    onTopicsChange(topics.map(topic =>
-      topic.id === topicId ? { ...topic, progress } : topic
-    ));
-  };
-
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
@@ -141,24 +136,24 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                         title={color.name}
                       />
                     ))}
-<div className="flex items-center gap-2">
-  <label
-    htmlFor="new-topic-custom-color"
-    className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:bg-muted/50"
-    title="Custom color"
-  >
-    <Plus className="w-4 h-4 text-muted-foreground" />
-  </label>
-  <input
-    id="new-topic-custom-color"
-    type="color"
-    value={selectedColor.startsWith('#') ? selectedColor : '#3b82f6'}
-    onChange={(e) => setSelectedColor(e.target.value)}
-    className="sr-only"
-    aria-label="Custom color"
-  />
-  <span className="text-xs text-muted-foreground">Custom</span>
-</div>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="new-topic-custom-color"
+                        className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:bg-muted/50"
+                        title="Custom color"
+                      >
+                        <Plus className="w-4 h-4 text-muted-foreground" />
+                      </label>
+                      <input
+                        id="new-topic-custom-color"
+                        type="color"
+                        value={selectedColor.startsWith('#') ? selectedColor : '#3b82f6'}
+                        onChange={(e) => setSelectedColor(e.target.value)}
+                        className="sr-only"
+                        aria-label="Custom color"
+                      />
+                      <span className="text-xs text-muted-foreground">Custom</span>
+                    </div>
                   </div>
                 </div>
 
@@ -214,23 +209,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                       <span>Progress</span>
                       <span>{topic.progress}%</span>
                     </div>
-<Progress value={topic.progress} className="h-2 [&>div]:bg-[var(--bar-color)]" style={{ ['--bar-color' as any]: resolveColor(topic.color) }} />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateProgress(topic.id, Math.min(100, topic.progress + 10))}
-                      >
-                        +10%
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateProgress(topic.id, Math.max(0, topic.progress - 10))}
-                      >
-                        -10%
-                      </Button>
-                    </div>
+                    <Progress value={topic.progress} className="h-2 [&>div]:bg-[var(--bar-color)]" style={{ ['--bar-color' as any]: resolveColor(topic.color) }} />
                   </div>
                 </div>
               </Card>
@@ -273,24 +252,24 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                         }`}
                       />
                     ))}
-<div className="flex items-center gap-2">
-  <label
-    htmlFor="edit-topic-custom-color"
-    className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:bg-muted/50"
-    title="Custom color"
-  >
-    <Plus className="w-4 h-4 text-muted-foreground" />
-  </label>
-  <input
-    id="edit-topic-custom-color"
-    type="color"
-    value={editingTopic.color.startsWith('#') ? editingTopic.color : '#3b82f6'}
-    onChange={(e) => setEditingTopic({ ...editingTopic, color: e.target.value })}
-    className="sr-only"
-    aria-label="Custom color"
-  />
-  <span className="text-xs text-muted-foreground">Custom</span>
-</div>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="edit-topic-custom-color"
+                        className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:bg-muted/50"
+                        title="Custom color"
+                      >
+                        <Plus className="w-4 h-4 text-muted-foreground" />
+                      </label>
+                      <input
+                        id="edit-topic-custom-color"
+                        type="color"
+                        value={editingTopic.color.startsWith('#') ? editingTopic.color : '#3b82f6'}
+                        onChange={(e) => setEditingTopic({ ...editingTopic, color: e.target.value })}
+                        className="sr-only"
+                        aria-label="Custom color"
+                      />
+                      <span className="text-xs text-muted-foreground">Custom</span>
+                    </div>
                   </div>
                 </div>
 

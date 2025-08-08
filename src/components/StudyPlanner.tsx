@@ -143,6 +143,7 @@ const filteredTasks = selectedTopic === "All"
   : tasksForDay.filter(task => task.topic === selectedTopic);
 
   const handleTaskClick = (task: Task) => {
+    console.log("Task clicked:", task); // Debug log
     setSelectedTask(task);
     setShowNoteUpload(true);
   };
