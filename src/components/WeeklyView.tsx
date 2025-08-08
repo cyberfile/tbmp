@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, GripVertical } from "lucide-react";
 import { 
   DndContext, 
   closestCenter,
@@ -91,8 +91,6 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
   return (
     <div 
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
       className={`p-3 rounded-md border border-border border-l-4 bg-card hover:shadow-sm transition-shadow cursor-pointer ${isDragging ? 'shadow-lg ring-2 ring-study-blue/40 scale-[1.02]' : ''}`}
       style={{ 
         borderLeftColor: resolveColor(task.color),
@@ -100,20 +98,33 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
       }}
       onClick={() => onTaskClick(task)}
     >
-      <div className="text-sm font-medium">{task.title}</div>
-      <div className="text-xs text-muted-foreground mt-1">
-        {task.topic} • {to12h(task.startTime)}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1">
+          <div className="text-sm font-medium">{task.title}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {task.topic} • {to12h(task.startTime)}
+          </div>
+          <Badge 
+            variant="secondary" 
+            className="mt-1 text-xs"
+            style={{ 
+              backgroundColor: resolveColor(task.color),
+              color: 'white'
+            }}
+          >
+            {task.topic}
+          </Badge>
+        </div>
+        <button 
+          aria-label="Drag task" 
+          className="p-1 -mr-1 text-muted-foreground hover:text-foreground cursor-grab" 
+          {...attributes} 
+          {...listeners} 
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
       </div>
-      <Badge 
-        variant="secondary" 
-        className="mt-1 text-xs"
-        style={{ 
-          backgroundColor: resolveColor(task.color),
-          color: 'white'
-        }}
-      >
-        {task.topic}
-      </Badge>
     </div>
   );
 }

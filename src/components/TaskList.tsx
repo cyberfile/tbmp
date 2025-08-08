@@ -93,11 +93,9 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   };
 
   return (
-    <Card 
-      ref={setNodeRef}
-      style={{ ...style, borderLeftColor: resolveColor(task.color) }}
-      {...attributes}
-      {...listeners}
+      <Card 
+        ref={setNodeRef}
+        style={{ ...style, borderLeftColor: resolveColor(task.color) }}
       className={cn(
         "group cursor-move transition-all duration-200 hover:shadow-md border border-border shadow-sm border-l-4",
         isDragging && "ring-2 ring-study-blue/40",
@@ -144,7 +142,15 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
             </div>
           </div>
           
-          <GripVertical className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
+          <button 
+            aria-label="Drag task"
+            className="p-1 -mr-1 text-muted-foreground hover:text-foreground cursor-grab flex-shrink-0"
+            {...attributes}
+            {...listeners}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </Card>

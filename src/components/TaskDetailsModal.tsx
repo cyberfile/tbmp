@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,11 +136,12 @@ export function TaskDetailsModal({ isOpen, task, topics, onClose, onUpdateTask }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh]">
+      <DialogContent className="max-w-2xl max-h-[85vh]" aria-describedby="task-dialog-desc">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Edit Task • {task.title}
           </DialogTitle>
+          <DialogDescription id="task-dialog-desc">Edit task details, add notes, or upload files.</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="edit" className="w-full">
