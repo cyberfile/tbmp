@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Edit2, Trash2, BookOpen, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -94,7 +94,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
@@ -102,7 +102,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 max-h-[65vh] overflow-y-auto pr-2">
           {/* Add New Topic */}
           <Card className="p-4 border-dashed border-2">
             {!isAddingTopic ? (

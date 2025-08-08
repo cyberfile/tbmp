@@ -136,7 +136,7 @@ export function TaskDetailsModal({ isOpen, task, topics, onClose, onUpdateTask }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh]" aria-describedby="task-dialog-desc">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden" aria-describedby="task-dialog-desc">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Edit Task • {task.title}
@@ -150,7 +150,7 @@ export function TaskDetailsModal({ isOpen, task, topics, onClose, onUpdateTask }
             <TabsTrigger value="notes">Notes & Files</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="edit" className="space-y-4">
+          <TabsContent value="edit" className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
             <div className="space-y-2">
               <Label htmlFor="task-title">Title</Label>
               <Input id="task-title" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -219,7 +219,7 @@ export function TaskDetailsModal({ isOpen, task, topics, onClose, onUpdateTask }
             </div>
           </TabsContent>
 
-          <TabsContent value="notes" className="space-y-4">
+          <TabsContent value="notes" className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
