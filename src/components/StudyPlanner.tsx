@@ -13,7 +13,7 @@ import { StudyStats } from "./StudyStats";
 import { TopicManager } from "./TopicManager";
 import { NotificationSettings } from "./NotificationSettings";
 import { PrintableView } from "./PrintableView";
-import { NoteUpload } from "./NoteUpload";
+import { TaskDetailsModal } from "./TaskDetailsModal";
 import { AddTaskModal } from "./AddTaskModal";
 import { EditGoalsModal } from "./EditGoalsModal";
 
@@ -35,6 +35,7 @@ interface Task {
   color: string;
   reminderMinutesBefore?: number;
   dayIndex?: number;
+  details?: string;
 }
 
 const initialTopics: Topic[] = [
@@ -131,10 +132,24 @@ export function StudyPlanner() {
   const lastQuizResult = 70;
   const studyProgress = (hoursStudiedToday / totalHoursGoal) * 100;
 
+  const computeTopicsProgress = (allTasks: Task[], allTopics: Topic[]) => {
+    return allTopics.map((t) => {
+      const topicTasks = allTasks.filter((ts) => ts.topic === t.name);
+      const completed = topicTasks.filter((ts) => ts.completed).length;
+      const total = topicTasks.length;
+      const progress = total ? Math.round((completed / total) * 100) : 0;
+      return { ...t, progress };
+    });
+  };
+
   const toggleTaskCompletion = (taskId: string) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    ));
+    setTasks((prev) => {
+      const updated = prev.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      );
+      setTopics((prevTopics) => computeTopicsProgress(updated, prevTopics));
+      return updated;
+    });
   };
 
 const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
@@ -155,7 +170,11 @@ const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
     completed: false,
     dayIndex: selectedDay,
   };
-  setTasks([...tasks, task]);
+  setTasks((prev) => {
+    const next = [...prev, task];
+    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+    return next;
+  });
 };
 
   const handleUpdateGoals = (daily: number, weekly: number) => {
@@ -164,11 +183,26 @@ const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
   };
 
 const handleTasksReorder = (reorderedTasks: Task[]) => {
-  setTasks(reorderedTasks);
+  setTasks(() => {
+    setTopics((prevTopics) => computeTopicsProgress(reorderedTasks, prevTopics));
+    return reorderedTasks;
+  });
 };
 
 const handleTaskDayChange = (taskId: string, dayIndex: number) => {
-  setTasks(prev => prev.map(t => t.id === taskId ? { ...t, dayIndex } : t));
+  setTasks((prev) => {
+    const next = prev.map(t => t.id === taskId ? { ...t, dayIndex } : t);
+    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+    return next;
+  });
+};
+
+const handleUpdateTask = (updatedTask: Task) => {
+  setTasks((prev) => {
+    const next = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
+    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+    return next;
+  });
 };
 
   return (
@@ -379,15 +413,17 @@ const handleTaskDayChange = (taskId: string, dayIndex: number) => {
         />
       )}
 
-      {/* Note Upload Modal */}
+      {/* Task Details Modal */}
       {showNoteUpload && selectedTask && (
-        <NoteUpload
-          topicName={selectedTask.topic}
-          taskTitle={selectedTask.title}
+        <TaskDetailsModal
+          isOpen={true}
+          task={selectedTask}
+          topics={topics}
           onClose={() => {
             setShowNoteUpload(false);
             setSelectedTask(null);
           }}
+          onUpdateTask={handleUpdateTask}
         />
       )}
 

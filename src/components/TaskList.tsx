@@ -110,6 +110,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
           <Checkbox 
             checked={task.completed} 
             onCheckedChange={() => onToggle(task.id)}
+            onClick={(e) => e.stopPropagation()}
             className="flex-shrink-0 data-[state=checked]:bg-study-green data-[state=checked]:border-study-green"
           />
           
