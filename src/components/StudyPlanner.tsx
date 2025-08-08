@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -110,10 +112,14 @@ export function StudyPlanner() {
   const [weeklyGoal, setWeeklyGoal] = useState(35);
   const [weeklyHours, setWeeklyHours] = useState(28);
 
+  const [plannerTitle, setPlannerTitle] = useState("Mathematics Study Planner");
+  const [plannerDescription, setPlannerDescription] = useState<string>("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+
   const hoursStudiedToday = 4;
   const [totalHoursGoal, setTotalHoursGoal] = useState(5);
   const lastQuizResult = 70;
-
   const studyProgress = (hoursStudiedToday / totalHoursGoal) * 100;
 
   const toggleTaskCompletion = (taskId: string) => {
@@ -171,8 +177,8 @@ export function StudyPlanner() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground hidden sm:block">aly</span>
-              <Button variant="outline" size="sm" className="gap-2 border-primary text-primary bg-transparent hover:bg-primary/10">
-                <span className="inline-flex items-center justify-center rounded-md w-5 h-5 border border-primary text-primary bg-transparent">
+              <Button variant="outline" size="sm" className="gap-2 border-study-blue text-study-blue bg-transparent hover:bg-study-blue/10 rounded-lg">
+                <span className="inline-flex items-center justify-center rounded-sm w-5 h-5 border border-study-blue text-study-blue bg-transparent">
                   <LogOut className="w-3.5 h-3.5" />
                 </span>
                 Sign Out
@@ -185,11 +191,42 @@ export function StudyPlanner() {
       <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Page Title */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Mathematics Study Planner</h1>
-            <p className="text-muted-foreground mt-1">
-              Organized by topics for focused learning
-            </p>
+          <div className="max-w-2xl">
+            {isEditingTitle ? (
+              <Input
+                value={plannerTitle}
+                onChange={(e) => setPlannerTitle(e.target.value)}
+                onBlur={() => setIsEditingTitle(false)}
+                className="h-10 text-2xl font-bold"
+                aria-label="Planner title"
+              />
+            ) : (
+              <h1
+                className="text-3xl font-bold cursor-text"
+                onClick={() => setIsEditingTitle(true)}
+              >
+                {plannerTitle}
+              </h1>
+            )}
+            <div className="mt-2">
+              {isEditingDescription ? (
+                <Textarea
+                  value={plannerDescription}
+                  onChange={(e) => setPlannerDescription(e.target.value)}
+                  onBlur={() => setIsEditingDescription(false)}
+                  placeholder="Add an optional description"
+                  className="min-h-[60px]"
+                  aria-label="Planner description"
+                />
+              ) : (
+                <button
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsEditingDescription(true)}
+                >
+                  {plannerDescription ? plannerDescription : "Add an optional description"}
+                </button>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button 

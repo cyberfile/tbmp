@@ -72,7 +72,15 @@ export default {
 					blue: 'hsl(var(--study-blue))',
 					'blue-light': 'hsl(var(--study-blue-light))',
 					pink: 'hsl(var(--study-pink))',
-					'pink-light': 'hsl(var(--study-pink-light))'
+					'pink-light': 'hsl(var(--study-pink-light))',
+					red: 'hsl(var(--study-red))',
+					'red-light': 'hsl(var(--study-red-light))',
+					teal: 'hsl(var(--study-teal))',
+					'teal-light': 'hsl(var(--study-teal-light))',
+					yellow: 'hsl(var(--study-yellow))',
+					'yellow-light': 'hsl(var(--study-yellow-light))',
+					indigo: 'hsl(var(--study-indigo))',
+					'indigo-light': 'hsl(var(--study-indigo-light))'
 				},
 				progress: {
 					bg: 'hsl(var(--progress-bg))',

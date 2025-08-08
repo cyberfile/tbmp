@@ -45,6 +45,14 @@
     --study-blue-light: 214 100% 95%;
     --study-pink: 320 65% 70%;
     --study-pink-light: 320 65% 98%;
+    --study-red: 0 84% 60%;
+    --study-red-light: 0 84% 95%;
+    --study-teal: 174 72% 40%;
+    --study-teal-light: 174 72% 95%;
+    --study-yellow: 45 100% 51%;
+    --study-yellow-light: 45 100% 95%;
+    --study-indigo: 226 70% 55%;
+    --study-indigo-light: 226 70% 95%;
 
     /* Progress Colors */
     --progress-bg: 210 40% 96%;

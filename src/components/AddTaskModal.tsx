@@ -25,6 +25,13 @@ interface Task {
   reminderMinutesBefore?: number;
 }
 
+const resolveColor = (c?: string) => {
+  if (!c) return undefined;
+  const v = c.trim();
+  if (v.startsWith('#') || v.startsWith('rgb') || v.startsWith('hsl(')) return v;
+  return `hsl(var(--${v}))`;
+};
+
 interface AddTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -102,7 +109,7 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModa
                 {topics.map((topic) => (
                   <SelectItem key={topic.id} value={topic.name}>
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: `hsl(var(--${topic.color}))` }} />
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: resolveColor(topic.color) }} />
                       {topic.name}
                     </div>
                   </SelectItem>

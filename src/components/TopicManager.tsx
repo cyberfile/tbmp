@@ -8,6 +8,13 @@ import { Progress } from "@/components/ui/progress";
 import { Plus, Edit2, Trash2, BookOpen, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+const resolveColor = (c?: string) => {
+  if (!c) return undefined;
+  const v = c.trim();
+  if (v.startsWith('#') || v.startsWith('rgb') || v.startsWith('hsl(')) return v;
+  return `hsl(var(--${v}))`;
+};
+
 interface Topic {
   id: string;
   name: string;
@@ -27,7 +34,11 @@ const availableColors = [
   { name: "Blue", value: "study-blue", bg: "bg-study-blue" },
   { name: "Green", value: "study-green", bg: "bg-study-green" },
   { name: "Orange", value: "study-orange", bg: "bg-study-orange" },
-  { name: "Pink", value: "study-pink", bg: "bg-study-pink" }
+  { name: "Pink", value: "study-pink", bg: "bg-study-pink" },
+  { name: "Red", value: "study-red", bg: "bg-study-red" },
+  { name: "Teal", value: "study-teal", bg: "bg-study-teal" },
+  { name: "Yellow", value: "study-yellow", bg: "bg-study-yellow" },
+  { name: "Indigo", value: "study-indigo", bg: "bg-study-indigo" },
 ];
 
 export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerProps) {
@@ -119,7 +130,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                 
                 <div className="space-y-2">
                   <span className="text-sm font-medium">Choose color:</span>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {availableColors.map((color) => (
                       <button
                         key={color.value}
@@ -130,6 +141,16 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                         title={color.name}
                       />
                     ))}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={selectedColor.startsWith('#') ? selectedColor : '#3b82f6'}
+                        onChange={(e) => setSelectedColor(e.target.value)}
+                        className="h-8 w-10 rounded-md border bg-transparent cursor-pointer"
+                        aria-label="Custom color"
+                      />
+                      <span className="text-xs text-muted-foreground">Custom</span>
+                    </div>
                   </div>
                 </div>
 
@@ -152,7 +173,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full bg-${topic.color}`} />
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: resolveColor(topic.color) }} />
                       <div>
                         <h4 className="font-medium">{topic.name}</h4>
                         <Badge variant="secondary" className="text-xs">
@@ -234,7 +255,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                 
                 <div className="space-y-2">
                   <span className="text-sm font-medium">Color:</span>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {availableColors.map((color) => (
                       <button
                         key={color.value}
@@ -244,6 +265,16 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                         }`}
                       />
                     ))}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={editingTopic.color.startsWith('#') ? editingTopic.color : '#3b82f6'}
+                        onChange={(e) => setEditingTopic({ ...editingTopic, color: e.target.value })}
+                        className="h-8 w-10 rounded-md border bg-transparent cursor-pointer"
+                        aria-label="Custom color"
+                      />
+                      <span className="text-xs text-muted-foreground">Custom</span>
+                    </div>
                   </div>
                 </div>
 
