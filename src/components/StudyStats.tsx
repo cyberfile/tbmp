@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Clock, Trophy, Target, TrendingUp, Edit3 } from "lucide-react";
 import { TopicPriorityLabel, type TopicPriority } from "../components/TopicPriorityLabel";
 
+const resolveColor = (c?: string) => {
+  if (!c) return undefined;
+  const v = c.trim();
+  if (v.startsWith('#') || v.startsWith('rgb') || v.startsWith('hsl(')) return v;
+  return `hsl(var(--${v}))`;
+};
+
 interface Topic {
   id: string;
   name: string;
@@ -112,7 +119,7 @@ export function StudyStats({
                   <div className="flex items-center gap-3">
                     <div 
                       className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: `hsl(var(--${topic.color}))` }}
+                      style={{ backgroundColor: resolveColor(topic.color) }}
                     />
                     <span className="font-medium">{topic.name}</span>
                     {onTopicPriorityChange && (

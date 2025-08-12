@@ -59,6 +59,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-purple",
     dayIndex: 0,
+    priority: "medium",
   },
   {
     id: "2",
@@ -70,6 +71,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-orange",
     dayIndex: 1,
+    priority: "high",
   },
   {
     id: "3",
@@ -81,6 +83,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-green",
     dayIndex: 2,
+    priority: "low",
   },
   {
     id: "4",
@@ -92,6 +95,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-purple",
     dayIndex: 3,
+    priority: "medium",
   },
   {
     id: "5",
@@ -103,6 +107,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-blue",
     dayIndex: 4,
+    priority: "medium",
   },
 ];
 

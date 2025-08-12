@@ -81,9 +81,15 @@ useEffect(() => {
 
   useEffect(() => {
     const t = topics.find(tt => tt.name === selectedTopicName);
-    if (t && (!color || !color.startsWith('#'))) {
-      // Default to topic color if not using custom hex
-      setColor(t.color);
+    if (t) {
+      // Only update color if not using custom hex
+      if (!color || !color.startsWith('#')) {
+        setColor(t.color);
+      }
+      // Update priority to match topic priority
+      if (t.priority) {
+        setPriority(t.priority);
+      }
     }
   }, [selectedTopicName, topics]);
 

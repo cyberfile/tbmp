@@ -57,6 +57,9 @@ const [priority, setPriority] = useState<TopicPriority>('medium');
     if (t) {
       setColor(t.color);
       setPriority(t.priority ?? 'medium');
+    } else if (!selectedTopic) {
+      // Reset to default when no topic is selected
+      setPriority('medium');
     }
   }, [selectedTopic, topics]);
 
@@ -85,6 +88,7 @@ onAddTask({
     setSelectedTopic("");
     setStartTime("");
     setEndTime("");
+    setPriority('medium');
     onClose();
   };
 
