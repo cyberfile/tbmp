@@ -130,27 +130,27 @@ function SortableTaskItem({ task, onToggle, onClick, onPriorityChange }: Sortabl
             )}>
               {task.title}
             </h4>
-            <div className="flex items-center gap-3 text-sm">
-              <Badge 
-                variant="secondary" 
-                className="text-xs px-2 py-1"
-                style={{ 
-                  backgroundColor: resolveColor(task.color),
-                  color: 'white'
-                }}
-              >
-                {task.topic}
-              </Badge>
-              <TopicPriorityLabel 
-                priority={task.priority ?? 'medium'} 
-                onChange={(p) => onPriorityChange?.(task.id, p)} 
-                size="sm"
-              />
-              <span className="text-muted-foreground flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {to12h(task.startTime)} - {to12h(task.endTime)}
-              </span>
-            </div>
+              <div className="flex items-center gap-4 text-sm">
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs px-2 py-1"
+                  style={{ 
+                    backgroundColor: resolveColor(task.color),
+                    color: 'white'
+                  }}
+                >
+                  {task.topic}
+                </Badge>
+                <TopicPriorityLabel 
+                  priority={task.priority ?? 'medium'} 
+                  onChange={(p) => onPriorityChange?.(task.id, p)} 
+                  size="sm"
+                />
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {to12h(task.startTime)} - {to12h(task.endTime)}
+                </span>
+              </div>
           </div>
           
           <button 

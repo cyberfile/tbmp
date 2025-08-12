@@ -184,7 +184,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
               <Card key={topic.id} className="p-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: resolveColor(topic.color) }} />
                       <div>
                         <h4 className="font-medium">{topic.name}</h4>

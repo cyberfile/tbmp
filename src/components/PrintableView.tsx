@@ -35,6 +35,7 @@ interface Task {
   color: string;
   reminderMinutesBefore?: number;
   dayIndex?: number;
+  priority?: 'low' | 'medium' | 'high';
 }
 
 interface Topic {
@@ -141,12 +142,14 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
 
         {/* Printable Content */}
         <div id="printable-content" className="p-6">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold mb-2">Mathematics Study Planner</h1>
-            <p className="text-muted-foreground mb-2">Topic-based learning schedule</p>
-            <p className="text-muted-foreground">
-              {viewType === "weekly" ? "Weekly" : "Monthly"} Overview - {new Date().toLocaleDateString()}
-            </p>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold">Study Planner</h1>
+              <p className="text-sm text-muted-foreground">Topic-based learning schedule</p>
+            </div>
+            <div className="text-right text-sm text-muted-foreground">
+              {viewType === "weekly" ? "Weekly Overview" : "Monthly Overview"} - {new Date().toLocaleDateString()}
+            </div>
           </div>
 
           {/* Topics Legend */}
@@ -174,10 +177,24 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
                       {dayTasks.length > 0 ? (
                         <div className="space-y-1">
                           {dayTasks.map((task) => (
-                            <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
+                            <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
                               <div className="font-medium text-sm break-words">{task.title}</div>
-                              <div className="text-xs text-gray-600 mt-0.5 break-words">
-                                {task.topic} • {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                                <span
+                                  className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded"
+                                  title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
+                                  style={{
+                                    backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                    color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
+                                    borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                  }}
+                                >
+                                  {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}
+                                </span>
+                                <span className="text-xs text-gray-600">
+                                  {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -194,14 +211,28 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
                       <h3 className="text-sm font-semibold border-b pb-1 mb-2">{day}</h3>
                       {dayTasks.length > 0 ? (
                         <div className="space-y-1">
-                          {dayTasks.map((task) => (
-                            <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
-                              <div className="font-medium text-sm break-words">{task.title}</div>
-                              <div className="text-xs text-gray-600 mt-0.5 break-words">
-                                {task.topic} • {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
-                              </div>
+                        {dayTasks.map((task) => (
+                          <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
+                            <div className="font-medium text-sm break-words">{task.title}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                              <span
+                                className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded"
+                                title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
+                                style={{
+                                  backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                  color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
+                                  borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                }}
+                              >
+                                {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}
+                              </span>
+                              <span className="text-xs text-gray-600">
+                                {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                              </span>
                             </div>
-                          ))}
+                          </div>
+                        ))}
                         </div>
                       ) : (
                         <p className="text-gray-500 italic text-xs">No tasks</p>
@@ -218,11 +249,25 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
               <h3 className="text-lg font-semibold">All Tasks</h3>
               <div className="space-y-2">
                 {tasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
+                  <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
                     <div>
                       <div className="font-medium">{task.title}</div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        {task.topic} • {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                        <span
+                          className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded"
+                          title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
+                          style={{
+                            backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                            color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
+                            borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                          }}
+                        >
+                          {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}
+                        </span>
+                        <span className="text-xs text-gray-600">
+                          {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -237,8 +282,8 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
 <textarea
   value={notes}
   onChange={(e) => setNotes(e.target.value)}
-  rows={4}
-  className="w-full border border-dashed rounded-md p-2 text-sm"
+  rows={8}
+  className="w-full border rounded-md p-3 text-sm resize-none min-h-[160px]"
 />
             </div>
 

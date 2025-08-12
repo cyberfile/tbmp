@@ -11,6 +11,7 @@ interface Topic {
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 interface Task {
@@ -53,7 +54,10 @@ const [priority, setPriority] = useState<TopicPriority>('medium');
 
   useEffect(() => {
     const t = topics.find((tt) => tt.name === selectedTopic);
-    if (t) setColor(t.color);
+    if (t) {
+      setColor(t.color);
+      setPriority(t.priority ?? 'medium');
+    }
   }, [selectedTopic, topics]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -130,14 +134,21 @@ onAddTask({
   <div className="flex items-center gap-3">
     <div
       className="w-4 h-4 rounded-full border"
-      style={{ backgroundColor: color ? (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl(') ? color : `hsl(var(--${color}))`) : 'transparent' }}
+      style={{ backgroundColor: resolveColor(color) }}
     />
+    <label
+      htmlFor="color"
+      className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer shadow-sm bg-[conic-gradient(at_50%_50%,_hsl(0_100%_50%),_hsl(60_100%_50%),_hsl(120_100%_45%),_hsl(180_100%_50%),_hsl(240_100%_60%),_hsl(300_100%_50%),_hsl(360_100%_50%))] hover:opacity-90"
+      title="Pick custom color"
+    >
+      <Plus className="w-4 h-4 text-white" />
+    </label>
     <input
       id="color"
       type="color"
-      value={color && (color.startsWith('#')) ? color : "#3b82f6"}
+      value={color && color.startsWith('#') ? color : "#3b82f6"}
       onChange={(e) => setColor(e.target.value)}
-      className="h-9 w-10 bg-transparent border rounded-md cursor-pointer"
+      className="sr-only"
       aria-label="Pick custom color"
     />
     <span className="text-xs text-muted-foreground">Defaults to topic color; pick a custom color if you want.</span>

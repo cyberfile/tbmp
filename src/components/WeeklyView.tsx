@@ -103,27 +103,29 @@ function SortableTask({ task, onTaskClick, onPriorityChange }: SortableTaskProps
       }}
       onClick={() => onTaskClick(task)}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
           <div className="text-sm font-medium break-words">{task.title}</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {task.topic} • {to12h(task.startTime)}
+          <div className="flex items-center gap-3 mt-1">
+            <Badge 
+              variant="secondary" 
+              className="text-xs"
+              style={{ 
+                backgroundColor: resolveColor(task.color),
+                color: 'white'
+              }}
+            >
+              {task.topic}
+            </Badge>
+            <TopicPriorityLabel 
+              priority={task.priority ?? 'medium'} 
+              onChange={(p) => onPriorityChange?.(task.id, p)} 
+              size="sm"
+            />
+            <span className="text-xs text-muted-foreground">
+              {to12h(task.startTime)} - {to12h(task.endTime)}
+            </span>
           </div>
-          <Badge 
-            variant="secondary" 
-            className="mt-1 text-xs"
-            style={{ 
-              backgroundColor: resolveColor(task.color),
-              color: 'white'
-            }}
-          >
-            {task.topic}
-          </Badge>
-          <TopicPriorityLabel 
-            priority={task.priority ?? 'medium'} 
-            onChange={(p) => onPriorityChange?.(task.id, p)}
-            size="sm"
-          />
         </div>
         <button 
           aria-label="Drag task" 
