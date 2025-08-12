@@ -2,12 +2,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Printer, Download, X } from "lucide-react";
+import { useState } from "react";
 
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
   const v = c.trim();
   if (v.startsWith('#') || v.startsWith('rgb') || v.startsWith('hsl(')) return v;
   return `hsl(var(--${v}))`;
+};
+
+const toUTC12h = (time: string) => {
+  if (!time) return "";
+  const [hStr, mStr = '0'] = time.split(':');
+  const d = new Date();
+  d.setHours(Number(hStr) || 0, Number(mStr) || 0, 0, 0);
+  let h = d.getUTCHours();
+  const m = d.getUTCMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  const mm = String(m).padStart(2,'0');
+  return `${h}:${mm} ${ampm}`;
 };
 
 interface Task {
@@ -36,6 +50,7 @@ interface PrintableViewProps {
 }
 
 export function PrintableView({ tasks, topics, viewType, onClose }: PrintableViewProps) {
+  const [notes, setNotes] = useState("");
   const handlePrint = () => {
     window.print();
   };
@@ -50,10 +65,11 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
           <head>
             <title>Study Plan - ${viewType}</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .task { margin: 10px 0; padding: 10px; border-left: 4px solid #ccc; }
-              .subject { font-weight: bold; margin: 5px 0; }
-              .time { color: #666; font-size: 14px; }
+              @page { size: A4 portrait; margin: 10mm; }
+              body { font-family: Arial, sans-serif; margin: 0; }
+              .task { margin: 6px 0; padding: 8px; border-left: 4px solid #ccc; }
+              .subject { font-weight: bold; margin: 4px 0; }
+              .time { color: #666; font-size: 12px; }
               @media print { .no-print { display: none; } }
             </style>
           </head>
@@ -68,11 +84,10 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
   };
 
   const getTasksGroupedByDay = () => {
-    // For demo purposes, group tasks by day of week
     const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     return daysOfWeek.map((day, index) => ({
       day,
-      tasks: tasks.filter((_, taskIndex) => taskIndex % 7 === index)
+      tasks: tasks.filter((t) => (t.dayIndex ?? 0) === index)
     }));
   };
 
@@ -82,11 +97,16 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <style>
         {`
+          @page { size: A4 portrait; margin: 10mm; }
           @media print {
+            html, body { padding: 0; margin: 0; }
             body * { visibility: hidden; }
             #printable-content, #printable-content * { visibility: visible; }
-            #printable-content { position: absolute; left: 0; top: 0; width: 100%; }
+            #printable-content { position: static; width: 100%; font-size: 12px; }
             .no-print { display: none !important; }
+            .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+            .day-card { break-inside: avoid; page-break-inside: avoid; }
+            .notes-area { break-inside: avoid; page-break-inside: avoid; }
           }
         `}
       </style>
@@ -139,25 +159,23 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
 
           {/* Weekly Schedule */}
           {viewType === "weekly" && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 day-grid">
               {groupedTasks.map(({ day, tasks: dayTasks }) => (
-                <div key={day} className="space-y-3">
-                  <h3 className="text-lg font-semibold border-b pb-2">{day}</h3>
+                <div key={day} className="day-card border rounded p-2">
+                  <h3 className="text-sm font-semibold border-b pb-1 mb-2">{day}</h3>
                   {dayTasks.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {dayTasks.map((task) => (
-                        <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
-                          <div>
-                            <div className="font-medium">{task.title}</div>
-                            <div className="text-xs text-gray-600 mt-1">
-                              {task.topic} • {task.startTime} - {task.endTime}
-                            </div>
+                        <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
+                          <div className="font-medium text-sm">{task.title}</div>
+                          <div className="text-xs text-gray-600 mt-0.5">
+                            {task.topic} • {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 italic">No tasks scheduled</p>
+                    <p className="text-gray-500 italic text-xs">No tasks</p>
                   )}
                 </div>
               ))}
@@ -174,7 +192,7 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
                     <div>
                       <div className="font-medium">{task.title}</div>
                       <div className="text-xs text-gray-600 mt-1">
-                        {task.topic} • {task.startTime} - {task.endTime}
+                        {task.topic} • {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
                       </div>
                     </div>
                   </div>
@@ -184,9 +202,15 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
             )}
 
             {/* Extra Notes (optional) */}
-            <div className="mt-8">
+            <div className="mt-8 notes-area">
               <h3 className="font-semibold mb-2">Additional Notes</h3>
-              <div className="h-24 border border-dashed rounded-md" />
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                className="w-full border border-dashed rounded-md p-2 text-sm"
+                placeholder="Type notes here..."
+              />
             </div>
 
             {/* Footer */}

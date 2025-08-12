@@ -23,6 +23,7 @@ interface Task {
   completed: boolean;
   color: string;
   reminderMinutesBefore?: number;
+  dayIndex?: number;
 }
 
 const resolveColor = (c?: string) => {
@@ -37,14 +38,16 @@ interface AddTaskModalProps {
   onClose: () => void;
   onAddTask: (task: Omit<Task, 'id' | 'completed'>) => void;
   topics: Topic[];
+  defaultDayIndex?: number;
 }
 
-export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModalProps) {
+export function AddTaskModal({ isOpen, onClose, onAddTask, topics, defaultDayIndex }: AddTaskModalProps) {
   const [title, setTitle] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [color, setColor] = useState<string>("");
+  const [dayIndex, setDayIndex] = useState<number>(defaultDayIndex ?? 0);
 
   useEffect(() => {
     const t = topics.find((tt) => tt.name === selectedTopic);
@@ -59,15 +62,16 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModa
     const topic = topics.find(t => t.name === selectedTopic);
     if (!topic) return;
 
-    onAddTask({
-      title,
-      subject: "Mathematics",
-      topic: selectedTopic,
-      startTime,
-      endTime,
-      color: color || topic.color,
-      reminderMinutesBefore: 60,
-    });
+onAddTask({
+  title,
+  subject: "Mathematics",
+  topic: selectedTopic,
+  startTime,
+  endTime,
+  color: color || topic.color,
+  reminderMinutesBefore: 60,
+  dayIndex,
+});
 
     // Reset form
     setTitle("");
@@ -118,24 +122,38 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics }: AddTaskModa
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="color">Task Color</Label>
-            <div className="flex items-center gap-3">
-              <div
-                className="w-4 h-4 rounded-full border"
-                style={{ backgroundColor: color ? (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl(') ? color : `hsl(var(--${color}))`) : 'transparent' }}
-              />
-              <input
-                id="color"
-                type="color"
-                value={color && (color.startsWith('#')) ? color : "#3b82f6"}
-                onChange={(e) => setColor(e.target.value)}
-                className="h-9 w-10 bg-transparent border rounded-md cursor-pointer"
-                aria-label="Pick custom color"
-              />
-              <span className="text-xs text-muted-foreground">Defaults to topic color; pick a custom color if you want.</span>
-            </div>
-          </div>
+<div className="space-y-2">
+  <Label htmlFor="color">Task Color</Label>
+  <div className="flex items-center gap-3">
+    <div
+      className="w-4 h-4 rounded-full border"
+      style={{ backgroundColor: color ? (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl(') ? color : `hsl(var(--${color}))`) : 'transparent' }}
+    />
+    <input
+      id="color"
+      type="color"
+      value={color && (color.startsWith('#')) ? color : "#3b82f6"}
+      onChange={(e) => setColor(e.target.value)}
+      className="h-9 w-10 bg-transparent border rounded-md cursor-pointer"
+      aria-label="Pick custom color"
+    />
+    <span className="text-xs text-muted-foreground">Defaults to topic color; pick a custom color if you want.</span>
+  </div>
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="day">Day</Label>
+  <Select value={String(dayIndex)} onValueChange={(v) => setDayIndex(Number(v))}>
+    <SelectTrigger id="day">
+      <SelectValue placeholder="Select day" />
+    </SelectTrigger>
+    <SelectContent>
+      {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
+        <SelectItem key={i} value={String(i)}>{d}</SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
