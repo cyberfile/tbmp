@@ -3,12 +3,14 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Clock, Trophy, Target, TrendingUp, Edit3 } from "lucide-react";
+import { TopicPriorityLabel, type TopicPriority } from "../components/TopicPriorityLabel";
 
 interface Topic {
   id: string;
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 interface StudyStatsProps {
@@ -20,6 +22,7 @@ interface StudyStatsProps {
   weeklyGoal?: number;
   isWeeklyView?: boolean;
   onEditGoals?: () => void;
+  onTopicPriorityChange?: (topicId: string, priority: TopicPriority) => void;
 }
 
 export function StudyStats({ 
@@ -30,7 +33,8 @@ export function StudyStats({
   weeklyHours = 0, 
   weeklyGoal = 35, 
   isWeeklyView = false,
-  onEditGoals 
+  onEditGoals,
+  onTopicPriorityChange,
 }: StudyStatsProps) {
   const progressPercent = isWeeklyView 
     ? (weeklyHours / weeklyGoal) * 100 
@@ -111,6 +115,15 @@ export function StudyStats({
                       style={{ backgroundColor: `hsl(var(--${topic.color}))` }}
                     />
                     <span className="font-medium">{topic.name}</span>
+                    {onTopicPriorityChange && (
+                      <div title={`${(topic.priority ?? 'medium').charAt(0).toUpperCase()}${(topic.priority ?? 'medium').slice(1)} priority`}>
+                        <TopicPriorityLabel 
+                          priority={topic.priority ?? 'medium'} 
+                          onChange={(p) => onTopicPriorityChange(topic.id, p)}
+                          size="sm"
+                        />
+                      </div>
+                    )}
                   </div>
                   <Badge variant="secondary" className="bg-muted text-muted-foreground">
                     {topic.progress}%

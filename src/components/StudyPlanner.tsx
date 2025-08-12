@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,14 @@ import { PrintableView } from "./PrintableView";
 import { TaskDetailsModal } from "./TaskDetailsModal";
 import { AddTaskModal } from "./AddTaskModal";
 import { EditGoalsModal } from "./EditGoalsModal";
+import type { TopicPriority } from "./TopicPriorityLabel";
 
 interface Topic {
   id: string;
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 interface Task {
@@ -36,13 +38,14 @@ interface Task {
   reminderMinutesBefore?: number;
   dayIndex?: number;
   details?: string;
+  priority?: TopicPriority;
 }
 
 const initialTopics: Topic[] = [
-  { id: "1", name: "Topic 1", color: "study-purple", progress: 75 },
-  { id: "2", name: "Topic 2", color: "study-orange", progress: 60 },
-  { id: "3", name: "Topic 3", color: "study-green", progress: 40 },
-  { id: "4", name: "Topic 4", color: "study-blue", progress: 20 },
+  { id: "1", name: "Topic 1", color: "study-purple", progress: 75, priority: "medium" },
+  { id: "2", name: "Topic 2", color: "study-orange", progress: 60, priority: "high" },
+  { id: "3", name: "Topic 3", color: "study-green", progress: 40, priority: "low" },
+  { id: "4", name: "Topic 4", color: "study-blue", progress: 20, priority: "medium" },
 ];
 
 const initialTasks: Task[] = [
@@ -56,6 +59,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-purple",
     dayIndex: 0,
+    priority: "medium",
   },
   {
     id: "2",
@@ -67,6 +71,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-orange",
     dayIndex: 1,
+    priority: "high",
   },
   {
     id: "3",
@@ -78,6 +83,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-green",
     dayIndex: 2,
+    priority: "low",
   },
   {
     id: "4",
@@ -89,6 +95,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-purple",
     dayIndex: 3,
+    priority: "medium",
   },
   {
     id: "5",
@@ -100,6 +107,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-blue",
     dayIndex: 4,
+    priority: "medium",
   },
 ];
 
@@ -127,10 +135,8 @@ export function StudyPlanner() {
   const mondayBasedToday = (new Date().getDay() + 6) % 7; // 0 = Monday
   const [selectedDay, setSelectedDay] = useState<number>(mondayBasedToday);
 
-  const hoursStudiedToday = 4;
   const [totalHoursGoal, setTotalHoursGoal] = useState(5);
   const lastQuizResult = 70;
-  const studyProgress = (hoursStudiedToday / totalHoursGoal) * 100;
 
   const computeTopicsProgress = (allTasks: Task[], allTopics: Topic[]) => {
     return allTopics.map((t) => {
@@ -141,7 +147,12 @@ export function StudyPlanner() {
       return { ...t, progress };
     });
   };
-
+  
+  // Initialize topic progress based on current tasks at mount
+  useEffect(() => {
+    setTopics((prevTopics) => computeTopicsProgress(tasks, prevTopics));
+  }, []);
+  
   const toggleTaskCompletion = (taskId: string) => {
     setTasks((prev) => {
       const updated = prev.map((task) =>
@@ -152,58 +163,137 @@ export function StudyPlanner() {
     });
   };
 
-const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
-const filteredTasks = selectedTopic === "All" 
-  ? tasksForDay 
-  : tasksForDay.filter(task => task.topic === selectedTopic);
+  const handleTopicsChange = (updatedTopics: Topic[]) => {
+    setTopics((prevTopics) => {
+      const prevById: Record<string, Topic> = {};
+      prevTopics.forEach((t) => (prevById[t.id] = t));
+      const renameMap: Record<string, string> = {};
+      const priorityChangeByName: Record<string, TopicPriority | undefined> = {};
+      updatedTopics.forEach((t) => {
+        const prev = prevById[t.id];
+        if (prev) {
+          if (prev.name !== t.name) {
+            renameMap[prev.name] = t.name;
+          }
+          if (prev.priority !== t.priority) {
+            priorityChangeByName[t.name] = t.priority;
+          }
+        }
+      });
 
+      if (Object.keys(renameMap).length || Object.keys(priorityChangeByName).length) {
+        setTasks((prevTasks) => prevTasks.map((task) => {
+          // Apply topic rename first if any
+          const newName = renameMap[task.topic];
+          const topicNameAfterRename = newName ? newName : task.topic;
+
+          // Apply priority sync if the topic has a new priority defined
+          const newPriority = priorityChangeByName[topicNameAfterRename];
+          if (newName || newPriority) {
+            return {
+              ...task,
+              topic: topicNameAfterRename,
+              ...(newPriority ? { priority: newPriority } : {}),
+            };
+          }
+          return task;
+        }));
+      }
+      return updatedTopics;
+    });
+  };
+
+  const handleTopicPriorityChange = (topicId: string, priority: TopicPriority) => {
+    setTopics((prev) => prev.map((t) => (t.id === topicId ? { ...t, priority } : t)));
+    setTasks((prev) => prev.map((task) => {
+      const topic = topics.find((t) => t.id === topicId);
+      if (!topic) return task;
+      return task.topic === topic.name ? { ...task, priority } : task;
+    }));
+  };
+
+  const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
+  const filteredTasks = selectedTopic === "All" 
+    ? tasksForDay 
+    : tasksForDay.filter(task => task.topic === selectedTopic);
+
+  // Compute study time from task durations (in hours)
+  const timeToMinutes = (t: string) => {
+    const [hStr, mStr = '0'] = t.split(':');
+    const h = Number(hStr) || 0;
+    const m = Number(mStr) || 0;
+    return h * 60 + m;
+  };
+  const taskDurationHours = (t: Task) => {
+    const start = timeToMinutes(t.startTime);
+    const end = timeToMinutes(t.endTime);
+    let diff = end - start;
+    if (diff < 0) diff += 24 * 60; // handle crossing midnight just in case
+    return Math.max(0, diff) / 60;
+  };
+
+  const completedDaily = tasksForDay
+    .filter(t => t.completed)
+    .reduce((sum, t) => sum + taskDurationHours(t), 0);
+
+  const completedWeekly = tasks
+    .filter(t => t.completed)
+    .reduce((sum, t) => sum + taskDurationHours(t), 0);
   const handleTaskClick = (task: Task) => {
     console.log("Task clicked:", task); // Debug log
     setSelectedTask(task);
     setShowNoteUpload(true);
   };
 
-const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
-  const task: Task = {
-    ...newTask,
-    id: Date.now().toString(),
-    completed: false,
-    dayIndex: newTask.dayIndex ?? selectedDay,
+  const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
+    const task: Task = {
+      ...newTask,
+      id: Date.now().toString(),
+      completed: false,
+      dayIndex: newTask.dayIndex ?? selectedDay,
+    };
+    setTasks((prev) => {
+      const next = [...prev, task];
+      setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+      return next;
+    });
   };
-  setTasks((prev) => {
-    const next = [...prev, task];
-    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
-    return next;
-  });
-};
 
   const handleUpdateGoals = (daily: number, weekly: number) => {
     setTotalHoursGoal(daily);
     setWeeklyGoal(weekly);
   };
 
-const handleTasksReorder = (reorderedTasks: Task[]) => {
-  setTasks(() => {
-    setTopics((prevTopics) => computeTopicsProgress(reorderedTasks, prevTopics));
-    return reorderedTasks;
-  });
-};
+  const handleTasksReorder = (reorderedTasks: Task[]) => {
+    setTasks(() => {
+      setTopics((prevTopics) => computeTopicsProgress(reorderedTasks, prevTopics));
+      return reorderedTasks;
+    });
+  };
 
-const handleTaskDayChange = (taskId: string, dayIndex: number) => {
-  setTasks((prev) => {
-    const next = prev.map(t => t.id === taskId ? { ...t, dayIndex } : t);
-    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
-    return next;
-  });
-};
+  const handleTaskDayChange = (taskId: string, dayIndex: number) => {
+    setTasks((prev) => {
+      const next = prev.map(t => t.id === taskId ? { ...t, dayIndex } : t);
+      setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+      return next;
+    });
+  };
 
-const handleUpdateTask = (updatedTask: Task) => {
-  setTasks((prev) => {
-    const next = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
-    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
-    return next;
-  });
-};
+  const handleUpdateTask = (updatedTask: Task) => {
+    setTasks((prev) => {
+      const next = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
+      setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+      return next;
+    });
+  };
+
+  const handleTaskPriorityChange = (taskId: string, priority: TopicPriority) => {
+    setTasks((prev) => {
+      const next = prev.map(t => t.id === taskId ? { ...t, priority } : t);
+      setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -314,14 +404,15 @@ const handleUpdateTask = (updatedTask: Task) => {
           {/* Stats Sidebar */}
           <div className="space-y-6">
             <StudyStats 
-              hoursStudied={hoursStudiedToday}
+              hoursStudied={completedDaily}
               totalHours={totalHoursGoal}
               topics={topics}
               lastQuizResult={lastQuizResult}
-              weeklyHours={weeklyHours}
+              weeklyHours={completedWeekly}
               weeklyGoal={weeklyGoal}
               isWeeklyView={view === "weekly"}
               onEditGoals={() => setShowEditGoals(true)}
+              onTopicPriorityChange={handleTopicPriorityChange}
             />
           </div>
 
@@ -345,41 +436,44 @@ const handleUpdateTask = (updatedTask: Task) => {
                     </TabsList>
                   </div>
 
-<TabsContent value="daily" className="space-y-6 mt-0">
-  <div className="flex items-center gap-2 flex-wrap mb-2">
-    {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
-      <Button
-        key={d}
-        size="sm"
-        variant={selectedDay === i ? 'default' : 'secondary'}
-        onClick={() => setSelectedDay(i)}
-        className={selectedDay === i ? 'bg-study-blue hover:bg-study-blue/90' : ''}
-      >
-        {d}
-      </Button>
-    ))}
-  </div>
-  <TaskList 
-    tasks={filteredTasks}
-    topics={topics}
-    selectedTopic={selectedTopic}
-    onTopicChange={setSelectedTopic}
-    onTaskToggle={toggleTaskCompletion}
-    onTaskClick={handleTaskClick}
-    onAddTask={() => setShowAddTask(true)}
-  />
-</TabsContent>
+                  <TabsContent value="daily" className="space-y-6 mt-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
+                        <Button
+                          key={i}
+                          size="sm"
+                          variant={selectedDay === i ? 'default' : 'outline'}
+                          className={selectedDay === i ? 'bg-study-blue text-white' : ''}
+                          onClick={() => setSelectedDay(i)}
+                        >
+                          {d}
+                        </Button>
+                      ))}
+                    </div>
+                    <TaskList 
+                      tasks={filteredTasks}
+                      topics={topics}
+                      selectedTopic={selectedTopic}
+                      onTopicChange={setSelectedTopic}
+                      onTaskToggle={toggleTaskCompletion}
+                      onTaskClick={handleTaskClick}
+                      onAddTask={() => setShowAddTask(true)}
+                      onTopicPriorityChange={handleTopicPriorityChange}
+                      onTaskPriorityChange={handleTaskPriorityChange}
+                    />
+                  </TabsContent>
 
-<TabsContent value="weekly" className="space-y-6 mt-0">
-  <WeeklyView 
-    tasks={tasks} 
-    topics={topics} 
-    onTaskClick={handleTaskClick}
-    onAddTask={() => setShowAddTask(true)}
-    onTasksReorder={handleTasksReorder}
-    onTaskDayChange={handleTaskDayChange}
-  />
-</TabsContent>
+                  <TabsContent value="weekly" className="space-y-6 mt-0">
+                    <WeeklyView 
+                      tasks={tasks} 
+                      topics={topics} 
+                      onTaskClick={handleTaskClick}
+                      onAddTask={() => setShowAddTask(true)}
+                      onTasksReorder={handleTasksReorder}
+                      onTaskDayChange={handleTaskDayChange}
+                      onTaskPriorityChange={handleTaskPriorityChange}
+                    />
+                  </TabsContent>
                 </Tabs>
               </div>
             </Card>
@@ -391,7 +485,7 @@ const handleUpdateTask = (updatedTask: Task) => {
       {showTopicManager && (
         <TopicManager
           topics={topics}
-          onTopicsChange={setTopics}
+          onTopicsChange={handleTopicsChange}
           onClose={() => setShowTopicManager(false)}
         />
       )}
@@ -410,6 +504,7 @@ const handleUpdateTask = (updatedTask: Task) => {
           topics={topics}
           viewType={printViewType}
           onClose={() => setShowPrintView(false)}
+          plannerTitle={plannerTitle}
         />
       )}
 
@@ -428,13 +523,13 @@ const handleUpdateTask = (updatedTask: Task) => {
       )}
 
       {/* Add Task Modal */}
-<AddTaskModal
-  isOpen={showAddTask}
-  onClose={() => setShowAddTask(false)}
-  onAddTask={handleAddTask}
-  topics={topics}
-  defaultDayIndex={selectedDay}
-/>
+      <AddTaskModal
+        isOpen={showAddTask}
+        onClose={() => setShowAddTask(false)}
+        onAddTask={handleAddTask}
+        topics={topics}
+        defaultDayIndex={selectedDay}
+      />
 
       {/* Edit Goals Modal */}
       <EditGoalsModal

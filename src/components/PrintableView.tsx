@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Printer, Download, X } from "lucide-react";
 import { useState } from "react";
-
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
   const v = c.trim();
@@ -34,6 +35,7 @@ interface Task {
   color: string;
   reminderMinutesBefore?: number;
   dayIndex?: number;
+  priority?: 'low' | 'medium' | 'high';
 }
 
 interface Topic {
@@ -48,40 +50,46 @@ interface PrintableViewProps {
   topics: Topic[];
   viewType: "weekly" | "monthly";
   onClose: () => void;
+  plannerTitle: string;
 }
 
-export function PrintableView({ tasks, topics, viewType, onClose }: PrintableViewProps) {
+export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }: PrintableViewProps) {
   const [notes, setNotes] = useState("");
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownload = () => {
-    // In a real app, this would generate a PDF
-    const printContent = document.getElementById('printable-content');
-    if (printContent) {
-      const newWindow = window.open('', '_blank');
-      newWindow?.document.write(`
-        <html>
-          <head>
-            <title>Study Plan - ${viewType}</title>
-            <style>
-              @page { size: A4 portrait; margin: 10mm; }
-              body { font-family: Arial, sans-serif; margin: 0; }
-              .task { margin: 6px 0; padding: 8px; border-left: 4px solid #ccc; }
-              .subject { font-weight: bold; margin: 4px 0; }
-              .time { color: #666; font-size: 12px; }
-              @media print { .no-print { display: none; } }
-            </style>
-          </head>
-          <body>
-            ${printContent.innerHTML}
-          </body>
-        </html>
-      `);
-      newWindow?.document.close();
-      newWindow?.print();
+  const handleDownload = async () => {
+    const node = document.getElementById('printable-content');
+    if (!node) return;
+
+    const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
+    const imgData = canvas.toDataURL('image/png');
+
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    if (imgHeight <= pageHeight) {
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    } else {
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft * -1;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
     }
+
+    pdf.save(`study-plan-${viewType}.pdf`);
   };
 
   const getTasksGroupedByDay = () => {
@@ -93,7 +101,8 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
   };
 
   const groupedTasks = getTasksGroupedByDay();
-
+  const leftDays = groupedTasks.slice(0, 4);
+  const rightDays = groupedTasks.slice(4);
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <style>
@@ -105,7 +114,7 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
             #printable-content, #printable-content * { visibility: visible; }
             #printable-content { position: static; width: 100%; font-size: 12px; }
             .no-print { display: none !important; }
-            .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+            .day-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
             .day-card { break-inside: avoid; page-break-inside: avoid; }
             .notes-area { break-inside: avoid; page-break-inside: avoid; }
           }
@@ -134,12 +143,14 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
 
         {/* Printable Content */}
         <div id="printable-content" className="p-6">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold mb-2">Mathematics Study Planner</h1>
-            <p className="text-muted-foreground mb-2">Topic-based learning schedule</p>
-            <p className="text-muted-foreground">
-              {viewType === "weekly" ? "Weekly" : "Monthly"} Overview - {new Date().toLocaleDateString()}
-            </p>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold">{plannerTitle}</h1>
+              <p className="text-sm text-muted-foreground">Topic-based learning schedule</p>
+            </div>
+            <div className="text-right text-sm text-muted-foreground">
+              {viewType === "weekly" ? "Weekly Overview" : "Monthly Overview"} - {new Date().toLocaleDateString()}
+            </div>
           </div>
 
           {/* Topics Legend */}
@@ -158,30 +169,80 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
             </div>
           </div>
 
-          {/* Weekly Schedule */}
-          {viewType === "weekly" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 day-grid">
-              {groupedTasks.map(({ day, tasks: dayTasks }) => (
-                <div key={day} className="day-card border rounded p-2">
-                  <h3 className="text-sm font-semibold border-b pb-1 mb-2">{day}</h3>
-                  {dayTasks.length > 0 ? (
-                    <div className="space-y-1">
-                      {dayTasks.map((task) => (
-                        <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
-                          <div className="font-medium text-sm">{task.title}</div>
-                          <div className="text-xs text-gray-600 mt-0.5">
-                            {task.topic} • {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
-                          </div>
+            {viewType === "weekly" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 day-grid">
+                <div className="space-y-4">
+                  {leftDays.map(({ day, tasks: dayTasks }) => (
+                    <div key={day} className="day-card border rounded p-2">
+                      <h3 className="text-sm font-semibold border-b pb-1 mb-2">{day}</h3>
+                      {dayTasks.length > 0 ? (
+                        <div className="space-y-1">
+                          {dayTasks.map((task) => (
+                            <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
+                              <div className="font-medium text-sm break-words">{task.title}</div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                                <span
+                                  className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
+                                  title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
+                                  style={{
+                                    backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                    color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
+                                    borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                  }}
+                                >
+                                  {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}
+                                </span>
+                                <span className="text-xs text-gray-600">
+                                  {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                                </span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <p className="text-gray-500 italic text-xs">No tasks</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-gray-500 italic text-xs">No tasks</p>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="space-y-4">
+                  {rightDays.map(({ day, tasks: dayTasks }) => (
+                    <div key={day} className="day-card border rounded p-2">
+                      <h3 className="text-sm font-semibold border-b pb-1 mb-2">{day}</h3>
+                      {dayTasks.length > 0 ? (
+                        <div className="space-y-1">
+                        {dayTasks.map((task) => (
+                          <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
+                            <div className="font-medium text-sm break-words">{task.title}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                              <span
+                                className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
+                                title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
+                                style={{
+                                  backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                  color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
+                                  borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                }}
+                              >
+                                {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}
+                              </span>
+                              <span className="text-xs text-gray-600">
+                                {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 italic text-xs">No tasks</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           {/* Monthly Schedule */}
           {viewType === "monthly" && (
@@ -189,11 +250,25 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
               <h3 className="text-lg font-semibold">All Tasks</h3>
               <div className="space-y-2">
                 {tasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: `hsl(var(--${task.color}))` }}>
+                  <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
                     <div>
                       <div className="font-medium">{task.title}</div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        {task.topic} • {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                        <span
+                          className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
+                          title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
+                          style={{
+                            backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                            color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
+                            borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                          }}
+                        >
+                          {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}
+                        </span>
+                        <span className="text-xs text-gray-600">
+                          {toUTC12h(task.startTime)} - {toUTC12h(task.endTime)} UTC
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -205,19 +280,14 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
             {/* Extra Notes (optional) */}
             <div className="mt-8 notes-area">
               <h3 className="font-semibold mb-2">Additional Notes</h3>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={4}
-                className="w-full border border-dashed rounded-md p-2 text-sm"
-                placeholder="Type notes here..."
-              />
+<textarea
+  value={notes}
+  onChange={(e) => setNotes(e.target.value)}
+  rows={8}
+  className="w-full border rounded-md p-3 text-sm resize-none min-h-[160px]"
+/>
             </div>
 
-            {/* Footer */}
-            <div className="mt-8 pt-4 border-t text-center text-sm text-gray-500 no-print">
-            Generated on {new Date().toLocaleDateString()} | Study AI Tool
-          </div>
         </div>
       </div>
     </div>

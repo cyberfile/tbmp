@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Progress } from "@/components/ui/progress";
 import { Plus, Edit2, Trash2, BookOpen, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
+import { TopicPriorityLabel, type TopicPriority } from "./TopicPriorityLabel";
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
   const v = c.trim();
@@ -22,6 +22,7 @@ interface Topic {
   color: string;
   progress: number;
   description?: string;
+  priority?: TopicPriority;
 }
 
 interface TopicManagerProps {
@@ -46,6 +47,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [newTopicName, setNewTopicName] = useState("");
   const [selectedColor, setSelectedColor] = useState(availableColors[0].value);
+  const [newTopicPriority, setNewTopicPriority] = useState<TopicPriority>('medium');
   const [isAddingTopic, setIsAddingTopic] = useState(false);
   const { toast } = useToast();
 
@@ -56,12 +58,14 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
       id: Date.now().toString(),
       name: newTopicName.trim(),
       color: selectedColor,
-      progress: 0
+      progress: 0,
+      priority: newTopicPriority,
     };
 
     onTopicsChange([...topics, newTopic]);
     setNewTopicName("");
     setSelectedColor(availableColors[0].value);
+    setNewTopicPriority('medium');
     setIsAddingTopic(false);
     
     toast({
@@ -157,6 +161,11 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                   </div>
                 </div>
 
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Priority:</span>
+                  <TopicPriorityLabel priority={newTopicPriority} onChange={setNewTopicPriority} />
+                </div>
+
                 <div className="flex gap-2">
                   <Button onClick={addTopic} disabled={!newTopicName.trim()}>
                     Add Topic
@@ -175,7 +184,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
               <Card key={topic.id} className="p-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: resolveColor(topic.color) }} />
                       <div>
                         <h4 className="font-medium">{topic.name}</h4>
@@ -271,6 +280,14 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                       <span className="text-xs text-muted-foreground">Custom</span>
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">Priority:</span>
+                  <TopicPriorityLabel 
+                    priority={editingTopic.priority ?? 'medium'} 
+                    onChange={(p) => setEditingTopic({ ...editingTopic, priority: p })}
+                  />
                 </div>
 
                 <div className="flex gap-2">

@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
-
+import { TopicPriorityLabel, type TopicPriority } from "./TopicPriorityLabel";
 interface Topic {
   id: string;
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 interface Task {
@@ -24,6 +25,7 @@ interface Task {
   color: string;
   reminderMinutesBefore?: number;
   dayIndex?: number;
+  priority?: TopicPriority;
 }
 
 const resolveColor = (c?: string) => {
@@ -47,11 +49,15 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics, defaultDayInd
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [color, setColor] = useState<string>("");
-  const [dayIndex, setDayIndex] = useState<number>(defaultDayIndex ?? 0);
+const [dayIndex, setDayIndex] = useState<number>(defaultDayIndex ?? 0);
+const [priority, setPriority] = useState<TopicPriority>('medium');
 
   useEffect(() => {
     const t = topics.find((tt) => tt.name === selectedTopic);
-    if (t) setColor(t.color);
+    if (t) {
+      setColor(t.color);
+      setPriority(t.priority ?? 'medium');
+    }
   }, [selectedTopic, topics]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -71,6 +77,7 @@ onAddTask({
   color: color || topic.color,
   reminderMinutesBefore: 60,
   dayIndex,
+  priority,
 });
 
     // Reset form
@@ -127,14 +134,21 @@ onAddTask({
   <div className="flex items-center gap-3">
     <div
       className="w-4 h-4 rounded-full border"
-      style={{ backgroundColor: color ? (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl(') ? color : `hsl(var(--${color}))`) : 'transparent' }}
+      style={{ backgroundColor: resolveColor(color) }}
     />
+    <label
+      htmlFor="color"
+      className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer shadow-sm bg-[conic-gradient(at_50%_50%,_hsl(0_100%_50%),_hsl(60_100%_50%),_hsl(120_100%_45%),_hsl(180_100%_50%),_hsl(240_100%_60%),_hsl(300_100%_50%),_hsl(360_100%_50%))] hover:opacity-90"
+      title="Pick custom color"
+    >
+      <Plus className="w-4 h-4 text-white" />
+    </label>
     <input
       id="color"
       type="color"
-      value={color && (color.startsWith('#')) ? color : "#3b82f6"}
+      value={color && color.startsWith('#') ? color : "#3b82f6"}
       onChange={(e) => setColor(e.target.value)}
-      className="h-9 w-10 bg-transparent border rounded-md cursor-pointer"
+      className="sr-only"
       aria-label="Pick custom color"
     />
     <span className="text-xs text-muted-foreground">Defaults to topic color; pick a custom color if you want.</span>
@@ -152,7 +166,12 @@ onAddTask({
         <SelectItem key={i} value={String(i)}>{d}</SelectItem>
       ))}
     </SelectContent>
-  </Select>
+</Select>
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="priority">Priority</Label>
+  <TopicPriorityLabel priority={priority} onChange={setPriority} />
 </div>
 
           <div className="grid grid-cols-2 gap-4">

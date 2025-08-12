@@ -24,6 +24,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Calendar, Clock, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TopicPriorityLabel, type TopicPriority } from "./TopicPriorityLabel";
 
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
@@ -52,6 +53,7 @@ interface Task {
   endTime: string;
   completed: boolean;
   color: string;
+  priority?: TopicPriority;
 }
 
 interface Topic {
@@ -59,6 +61,7 @@ interface Topic {
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 interface TaskListProps {
@@ -69,15 +72,18 @@ interface TaskListProps {
   onTaskToggle: (taskId: string) => void;
   onTaskClick: (task: Task) => void;
   onAddTask?: () => void;
+  onTopicPriorityChange?: (topicId: string, priority: TopicPriority) => void;
+  onTaskPriorityChange?: (taskId: string, priority: TopicPriority) => void;
 }
 
 interface SortableTaskItemProps {
   task: Task;
   onToggle: (taskId: string) => void;
   onClick: (task: Task) => void;
+  onPriorityChange?: (taskId: string, priority: TopicPriority) => void;
 }
 
-function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
+function SortableTaskItem({ task, onToggle, onClick, onPriorityChange }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -91,6 +97,8 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
+  const priorityTitle = `${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`;
 
   return (
       <Card 
@@ -124,22 +132,29 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
             )}>
               {task.title}
             </h4>
-            <div className="flex items-center gap-3 text-sm">
-              <Badge 
-                variant="secondary" 
-                className="text-xs px-2 py-1"
-                style={{ 
-                  backgroundColor: resolveColor(task.color),
-                  color: 'white'
-                }}
-              >
-                {task.topic}
-              </Badge>
-              <span className="text-muted-foreground flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {to12h(task.startTime)} - {to12h(task.endTime)}
-              </span>
-            </div>
+              <div className="flex items-center gap-4 text-sm">
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs px-2 py-1"
+                  style={{ 
+                    backgroundColor: resolveColor(task.color),
+                    color: 'white'
+                  }}
+                >
+                  {task.topic}
+                </Badge>
+                <div title={priorityTitle}>
+                  <TopicPriorityLabel 
+                    priority={task.priority ?? 'medium'} 
+                    onChange={(p) => onPriorityChange?.(task.id, p)} 
+                    size="sm"
+                  />
+                </div>
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {to12h(task.startTime)} - {to12h(task.endTime)}
+                </span>
+              </div>
           </div>
           
           <button 
@@ -157,7 +172,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   );
 }
 
-export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask }: TaskListProps) {
+export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask, onTopicPriorityChange, onTaskPriorityChange }: TaskListProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -189,7 +204,7 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
       {/* Subject Filter */}
       <div className="flex items-center gap-3 flex-wrap p-4 bg-muted/30 rounded-xl">
         <span className="text-sm font-semibold text-foreground">Filter by topic:</span>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-3 flex-wrap">
           <Button
             size="sm"
             variant={selectedTopic === "All" ? "default" : "secondary"}
@@ -199,11 +214,11 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
             All Topics
           </Button>
           {topics.map((topic) => (
-            <Button
-              key={topic.id}
-              size="sm"
-              variant={selectedTopic === topic.name ? "default" : "secondary"}
-              onClick={() => onTopicChange(topic.name)}
+            <div key={topic.id} className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={selectedTopic === topic.name ? "default" : "secondary"}
+                onClick={() => onTopicChange(topic.name)}
                 className={
                   selectedTopic === topic.name
                     ? "text-white shadow-sm"
@@ -214,13 +229,14 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
                     ? { backgroundColor: resolveColor(topic.color) }
                     : undefined
                 }
-            >
-              <div 
-                className="w-2 h-2 rounded-full mr-2"
-                style={{ backgroundColor: resolveColor(topic.color) }}
-              />
-              {topic.name}
-            </Button>
+              >
+                <div 
+                  className="w-2 h-2 rounded-full mr-2"
+                  style={{ backgroundColor: resolveColor(topic.color) }}
+                />
+                <span className="break-words">{topic.name}</span>
+              </Button>
+            </div>
           ))}
         </div>
       </div>
@@ -259,6 +275,7 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
                   task={task}
                   onToggle={onTaskToggle}
                   onClick={onTaskClick}
+                  onPriorityChange={onTaskPriorityChange}
                 />
               ))}
             </div>

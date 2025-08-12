@@ -20,20 +20,23 @@ export function TopicPriorityLabel({ priority, onChange, size = "sm" }: TopicPri
   const [open, setOpen] = useState(false);
   const current = labelMap[priority];
 
+  const isInteractive = Boolean(onChange);
+
   const badge = (
     <Badge
       variant="secondary"
       title={current.title}
-      className={`${size === "sm" ? "text-[10px] px-2 py-0.5" : "text-xs px-2.5 py-1"} cursor-pointer border`}
+      className={`${size === "sm" ? "text-[11px] px-2.5 py-0.5" : "text-xs px-3 py-1"} font-bold cursor-pointer border inline-flex items-center ml-2 rounded-full`}
       style={{
-        backgroundColor: `hsl(var(${current.varName}) / 0.4)`,
+        backgroundColor: `hsl(var(${current.varName}) / 0.3)`,
         color: `hsl(var(${current.varName}))`,
-        borderColor: `hsl(var(${current.varName}) / 0.4)`,
+        borderColor: `hsl(var(${current.varName}) / 0.3)`,
       }}
       onClick={(e) => {
         e.stopPropagation();
-        if (!onChange) return;
       }}
+      onMouseDown={(e) => { e.stopPropagation(); }}
+      onPointerDown={(e) => { e.stopPropagation(); }}
     >
       {current.text}
     </Badge>
@@ -46,19 +49,22 @@ export function TopicPriorityLabel({ priority, onChange, size = "sm" }: TopicPri
       <PopoverTrigger asChild>
         {badge}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-40 p-2">
+      <PopoverContent align="start" sideOffset={6} className="z-[1000] w-40 p-2 bg-card border shadow-lg">
         <div className="text-xs font-medium mb-2">Set priority</div>
         <div className="flex items-center gap-2">
           {(Object.keys(labelMap) as TopicPriority[]).map((p) => (
             <Badge
               key={p}
               role="button"
-              className={`text-[10px] px-2 py-0.5 cursor-pointer border ${p === priority ? "ring-2 ring-ring" : ""}`}
+              title={labelMap[p].title}
+              className={`text-[11px] px-2.5 py-0.5 cursor-pointer border font-bold rounded-full ${p === priority ? "ring-2 ring-ring" : ""}`}
               style={{
-                backgroundColor: `hsl(var(${labelMap[p].varName}) / 0.4)`,
+                backgroundColor: `hsl(var(${labelMap[p].varName}) / 0.3)`,
                 color: `hsl(var(${labelMap[p].varName}))`,
-                borderColor: `hsl(var(${labelMap[p].varName}) / 0.4)`,
+                borderColor: `hsl(var(${labelMap[p].varName}) / 0.3)`,
               }}
+              onMouseDown={(e) => { e.stopPropagation(); }}
+              onPointerDown={(e) => { e.stopPropagation(); }}
               onClick={(e) => {
                 e.stopPropagation();
                 onChange(p);

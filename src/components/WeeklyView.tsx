@@ -23,6 +23,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import { TopicPriorityLabel, type TopicPriority } from "./TopicPriorityLabel";
+
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
   const v = c.trim();
@@ -50,6 +52,7 @@ interface Task {
   completed: boolean;
   color: string;
   dayIndex?: number;
+  priority?: TopicPriority;
 }
 
 interface Topic {
@@ -66,14 +69,16 @@ interface WeeklyViewProps {
   onAddTask?: () => void;
   onTasksReorder?: (tasks: Task[]) => void;
   onTaskDayChange?: (taskId: string, dayIndex: number) => void;
+  onTaskPriorityChange?: (taskId: string, priority: TopicPriority) => void;
 }
 
 interface SortableTaskProps {
   task: Task;
   onTaskClick: (task: Task) => void;
+  onPriorityChange?: (taskId: string, priority: TopicPriority) => void;
 }
 
-function SortableTask({ task, onTaskClick }: SortableTaskProps) {
+function SortableTask({ task, onTaskClick, onPriorityChange }: SortableTaskProps) {
   const {
     attributes,
     listeners,
@@ -88,6 +93,8 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
     transition,
   };
 
+  const priorityTitle = `${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`;
+
   return (
     <div 
       ref={setNodeRef}
@@ -98,22 +105,31 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
       }}
       onClick={() => onTaskClick(task)}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
-          <div className="text-sm font-medium">{task.title}</div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {task.topic} • {to12h(task.startTime)}
+          <div className="text-sm font-medium break-words">{task.title}</div>
+          <div className="flex items-center gap-3 mt-1">
+            <Badge 
+              variant="secondary" 
+              className="text-xs"
+              style={{ 
+                backgroundColor: resolveColor(task.color),
+                color: 'white'
+              }}
+            >
+              {task.topic}
+            </Badge>
+            <div title={priorityTitle}>
+              <TopicPriorityLabel 
+                priority={task.priority ?? 'medium'} 
+                onChange={(p) => onPriorityChange?.(task.id, p)} 
+                size="sm"
+              />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {to12h(task.startTime)} - {to12h(task.endTime)}
+            </span>
           </div>
-          <Badge 
-            variant="secondary" 
-            className="mt-1 text-xs"
-            style={{ 
-              backgroundColor: resolveColor(task.color),
-              color: 'white'
-            }}
-          >
-            {task.topic}
-          </Badge>
         </div>
         <button 
           aria-label="Drag task" 
@@ -140,7 +156,7 @@ function DayColumn({ id, children }: { id: string; children: React.ReactNode }) 
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReorder, onTaskDayChange }: WeeklyViewProps) {
+export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReorder, onTaskDayChange, onTaskPriorityChange }: WeeklyViewProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -154,17 +170,17 @@ export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReord
     return map;
   }, [tasks]);
 
-const [columns, setColumns] = useState<Record<number, string[]>>(() => {
-  const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
-  tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
-  return cols;
-});
+  const [columns, setColumns] = useState<Record<number, string[]>>(() => {
+    const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+    tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
+    return cols;
+  });
 
-useEffect(() => {
-  const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
-  tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
-  setColumns(cols);
-}, [tasks]);
+  useEffect(() => {
+    const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+    tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
+    setColumns(cols);
+  }, [tasks]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -261,13 +277,13 @@ useEffect(() => {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {daysOfWeek.map((day, index) => {
               const dayTasks = getTasksForDay(index);
               
               return (
-                <div key={day} className="space-y-3">
-                  <div className="font-medium text-sm text-center py-2 bg-secondary rounded-md">
+                <div key={day} className="space-y-3 break-words">
+                  <div className="font-medium text-sm text-left py-2 bg-secondary rounded-md px-2">
                     {day}
                   </div>
                   <DayColumn id={`day-${index}`}>
@@ -278,6 +294,7 @@ useEffect(() => {
                             key={task.id}
                             task={task}
                             onTaskClick={onTaskClick}
+                            onPriorityChange={onTaskPriorityChange}
                           />
                         ))}
                         {dayTasks.length === 0 && (
