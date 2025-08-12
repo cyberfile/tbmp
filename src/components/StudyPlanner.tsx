@@ -168,7 +168,7 @@ const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
     ...newTask,
     id: Date.now().toString(),
     completed: false,
-    dayIndex: selectedDay,
+    dayIndex: newTask.dayIndex ?? selectedDay,
   };
   setTasks((prev) => {
     const next = [...prev, task];
@@ -428,12 +428,13 @@ const handleUpdateTask = (updatedTask: Task) => {
       )}
 
       {/* Add Task Modal */}
-      <AddTaskModal
-        isOpen={showAddTask}
-        onClose={() => setShowAddTask(false)}
-        onAddTask={handleAddTask}
-        topics={topics}
-      />
+<AddTaskModal
+  isOpen={showAddTask}
+  onClose={() => setShowAddTask(false)}
+  onAddTask={handleAddTask}
+  topics={topics}
+  defaultDayIndex={selectedDay}
+/>
 
       {/* Edit Goals Modal */}
       <EditGoalsModal
