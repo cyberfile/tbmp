@@ -38,6 +38,7 @@ interface Task {
   reminderMinutesBefore?: number;
   dayIndex?: number;
   details?: string;
+  priority?: TopicPriority;
 }
 
 const initialTopics: Topic[] = [
@@ -232,6 +233,14 @@ const handleUpdateTask = (updatedTask: Task) => {
   });
 };
 
+const handleTaskPriorityChange = (taskId: string, priority: TopicPriority) => {
+  setTasks((prev) => {
+    const next = prev.map(t => t.id === taskId ? { ...t, priority } : t);
+    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+    return next;
+  });
+};
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -374,6 +383,19 @@ const handleUpdateTask = (updatedTask: Task) => {
                   </div>
 
 <TabsContent value="daily" className="space-y-6 mt-0">
+  <div className="flex items-center gap-2 flex-wrap mb-2">
+    {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
+      <Button
+        key={i}
+        size="sm"
+        variant={selectedDay === i ? 'default' : 'outline'}
+        className={selectedDay === i ? 'bg-study-blue text-white' : ''}
+        onClick={() => setSelectedDay(i)}
+      >
+        {d}
+      </Button>
+    ))}
+  </div>
   <TaskList 
     tasks={filteredTasks}
     topics={topics}
@@ -383,6 +405,7 @@ const handleUpdateTask = (updatedTask: Task) => {
     onTaskClick={handleTaskClick}
     onAddTask={() => setShowAddTask(true)}
     onTopicPriorityChange={handleTopicPriorityChange}
+    onTaskPriorityChange={handleTaskPriorityChange}
   />
 </TabsContent>
 
@@ -394,6 +417,7 @@ const handleUpdateTask = (updatedTask: Task) => {
     onAddTask={() => setShowAddTask(true)}
     onTasksReorder={handleTasksReorder}
     onTaskDayChange={handleTaskDayChange}
+    onTaskPriorityChange={handleTaskPriorityChange}
   />
 </TabsContent>
                 </Tabs>

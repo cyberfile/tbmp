@@ -24,6 +24,7 @@ interface Task {
   color: string;
   reminderMinutesBefore?: number;
   dayIndex?: number;
+  priority?: TopicPriority;
 }
 
 const resolveColor = (c?: string) => {
@@ -47,7 +48,8 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics, defaultDayInd
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [color, setColor] = useState<string>("");
-  const [dayIndex, setDayIndex] = useState<number>(defaultDayIndex ?? 0);
+const [dayIndex, setDayIndex] = useState<number>(defaultDayIndex ?? 0);
+const [priority, setPriority] = useState<TopicPriority>('medium');
 
   useEffect(() => {
     const t = topics.find((tt) => tt.name === selectedTopic);
@@ -71,6 +73,7 @@ onAddTask({
   color: color || topic.color,
   reminderMinutesBefore: 60,
   dayIndex,
+  priority,
 });
 
     // Reset form
@@ -152,7 +155,12 @@ onAddTask({
         <SelectItem key={i} value={String(i)}>{d}</SelectItem>
       ))}
     </SelectContent>
-  </Select>
+</Select>
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="priority">Priority</Label>
+  <TopicPriorityLabel priority={priority} onChange={setPriority} />
 </div>
 
           <div className="grid grid-cols-2 gap-4">

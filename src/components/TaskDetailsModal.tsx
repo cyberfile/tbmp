@@ -36,6 +36,7 @@ export interface Task {
   reminderMinutesBefore?: number;
   dayIndex?: number;
   details?: string;
+  priority?: TopicPriority;
 }
 
 interface TaskDetailsModalProps {
@@ -60,21 +61,23 @@ export function TaskDetailsModal({ isOpen, task, topics, onClose, onUpdateTask }
   const [startTime, setStartTime] = useState(task.startTime);
   const [endTime, setEndTime] = useState(task.endTime);
   const [details, setDetails] = useState(task.details || "");
-  const [color, setColor] = useState<string>(task.color);
+const [color, setColor] = useState<string>(task.color);
+const [priority, setPriority] = useState<TopicPriority>(task.priority ?? 'medium');
 
   // Notes & Files state (local, ephemeral for now)
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    setTitle(task.title);
-    setSelectedTopicName(task.topic);
-    setStartTime(task.startTime);
-    setEndTime(task.endTime);
-    setDetails(task.details || "");
-    setColor(task.color);
-  }, [task]);
+useEffect(() => {
+  setTitle(task.title);
+  setSelectedTopicName(task.topic);
+  setStartTime(task.startTime);
+  setEndTime(task.endTime);
+  setDetails(task.details || "");
+  setColor(task.color);
+  setPriority(task.priority ?? 'medium');
+}, [task]);
 
   useEffect(() => {
     const t = topics.find(tt => tt.name === selectedTopicName);
@@ -88,15 +91,16 @@ export function TaskDetailsModal({ isOpen, task, topics, onClose, onUpdateTask }
 
   const handleSave = () => {
     if (!title || !selectedTopicName || !startTime || !endTime) return;
-    const updated: Task = {
-      ...task,
-      title,
-      topic: selectedTopicName,
-      startTime,
-      endTime,
-      details,
-      color: color || selectedTopic?.color || task.color,
-    };
+const updated: Task = {
+  ...task,
+  title,
+  topic: selectedTopicName,
+  startTime,
+  endTime,
+  details,
+  color: color || selectedTopic?.color || task.color,
+  priority,
+};
     onUpdateTask(updated);
     onClose();
   };
@@ -172,8 +176,13 @@ export function TaskDetailsModal({ isOpen, task, topics, onClose, onUpdateTask }
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
-            </div>
+</Select>
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="task-priority">Priority</Label>
+  <TopicPriorityLabel priority={priority} onChange={setPriority} />
+</div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

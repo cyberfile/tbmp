@@ -53,6 +53,7 @@ interface Task {
   endTime: string;
   completed: boolean;
   color: string;
+  priority?: TopicPriority;
 }
 
 interface Topic {
@@ -72,15 +73,17 @@ interface TaskListProps {
   onTaskClick: (task: Task) => void;
   onAddTask?: () => void;
   onTopicPriorityChange?: (topicId: string, priority: TopicPriority) => void;
+  onTaskPriorityChange?: (taskId: string, priority: TopicPriority) => void;
 }
 
 interface SortableTaskItemProps {
   task: Task;
   onToggle: (taskId: string) => void;
   onClick: (task: Task) => void;
+  onPriorityChange?: (taskId: string, priority: TopicPriority) => void;
 }
 
-function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
+function SortableTaskItem({ task, onToggle, onClick, onPriorityChange }: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -138,6 +141,11 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
               >
                 {task.topic}
               </Badge>
+              <TopicPriorityLabel 
+                priority={task.priority ?? 'medium'} 
+                onChange={(p) => onPriorityChange?.(task.id, p)} 
+                size="sm"
+              />
               <span className="text-muted-foreground flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {to12h(task.startTime)} - {to12h(task.endTime)}
@@ -160,7 +168,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   );
 }
 
-export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask, onTopicPriorityChange }: TaskListProps) {
+export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask, onTopicPriorityChange, onTaskPriorityChange }: TaskListProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -224,13 +232,6 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
                 />
                 <span className="break-words">{topic.name}</span>
               </Button>
-              {onTopicPriorityChange && (
-                <TopicPriorityLabel 
-                  priority={topic.priority ?? 'medium'} 
-                  onChange={(p) => onTopicPriorityChange(topic.id, p)}
-                  size="sm"
-                />
-              )}
             </div>
           ))}
         </div>
@@ -270,6 +271,7 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
                   task={task}
                   onToggle={onTaskToggle}
                   onClick={onTaskClick}
+                  onPriorityChange={onTaskPriorityChange}
                 />
               ))}
             </div>

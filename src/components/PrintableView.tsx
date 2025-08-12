@@ -234,13 +234,12 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
             {/* Extra Notes (optional) */}
             <div className="mt-8 notes-area">
               <h3 className="font-semibold mb-2">Additional Notes</h3>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={4}
-                className="w-full border border-dashed rounded-md p-2 text-sm"
-                placeholder="Type notes here..."
-              />
+<textarea
+  value={notes}
+  onChange={(e) => setNotes(e.target.value)}
+  rows={4}
+  className="w-full border border-dashed rounded-md p-2 text-sm"
+/>
             </div>
 
         </div>

@@ -23,6 +23,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import { TopicPriorityLabel, type TopicPriority } from "./TopicPriorityLabel";
+
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
   const v = c.trim();
@@ -50,6 +52,7 @@ interface Task {
   completed: boolean;
   color: string;
   dayIndex?: number;
+  priority?: TopicPriority;
 }
 
 interface Topic {
@@ -66,14 +69,16 @@ interface WeeklyViewProps {
   onAddTask?: () => void;
   onTasksReorder?: (tasks: Task[]) => void;
   onTaskDayChange?: (taskId: string, dayIndex: number) => void;
+  onTaskPriorityChange?: (taskId: string, priority: TopicPriority) => void;
 }
 
 interface SortableTaskProps {
   task: Task;
   onTaskClick: (task: Task) => void;
+  onPriorityChange?: (taskId: string, priority: TopicPriority) => void;
 }
 
-function SortableTask({ task, onTaskClick }: SortableTaskProps) {
+function SortableTask({ task, onTaskClick, onPriorityChange }: SortableTaskProps) {
   const {
     attributes,
     listeners,
@@ -114,6 +119,11 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
           >
             {task.topic}
           </Badge>
+          <TopicPriorityLabel 
+            priority={task.priority ?? 'medium'} 
+            onChange={(p) => onPriorityChange?.(task.id, p)}
+            size="sm"
+          />
         </div>
         <button 
           aria-label="Drag task" 
@@ -140,7 +150,7 @@ function DayColumn({ id, children }: { id: string; children: React.ReactNode }) 
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReorder, onTaskDayChange }: WeeklyViewProps) {
+export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReorder, onTaskDayChange, onTaskPriorityChange }: WeeklyViewProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -278,6 +288,7 @@ useEffect(() => {
                             key={task.id}
                             task={task}
                             onTaskClick={onTaskClick}
+                            onPriorityChange={onTaskPriorityChange}
                           />
                         ))}
                         {dayTasks.length === 0 && (
