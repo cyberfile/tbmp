@@ -349,6 +349,7 @@ const handleUpdateTask = (updatedTask: Task) => {
               weeklyGoal={weeklyGoal}
               isWeeklyView={view === "weekly"}
               onEditGoals={() => setShowEditGoals(true)}
+              onTopicPriorityChange={handleTopicPriorityChange}
             />
           </div>
 
@@ -406,7 +407,7 @@ const handleUpdateTask = (updatedTask: Task) => {
       {showTopicManager && (
         <TopicManager
           topics={topics}
-          onTopicsChange={setTopics}
+          onTopicsChange={handleTopicsChange}
           onClose={() => setShowTopicManager(false)}
         />
       )}

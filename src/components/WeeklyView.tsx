@@ -100,7 +100,7 @@ function SortableTask({ task, onTaskClick }: SortableTaskProps) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
-          <div className="text-sm font-medium">{task.title}</div>
+          <div className="text-sm font-medium break-words">{task.title}</div>
           <div className="text-xs text-muted-foreground mt-1">
             {task.topic} • {to12h(task.startTime)}
           </div>

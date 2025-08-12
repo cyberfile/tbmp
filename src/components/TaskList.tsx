@@ -222,7 +222,7 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
                   className="w-2 h-2 rounded-full mr-2"
                   style={{ backgroundColor: resolveColor(topic.color) }}
                 />
-                <span className="truncate max-w-[140px]">{topic.name}</span>
+                <span className="break-words">{topic.name}</span>
               </Button>
               {onTopicPriorityChange && (
                 <TopicPriorityLabel 
