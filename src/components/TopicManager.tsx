@@ -139,10 +139,10 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                     <div className="flex items-center gap-2">
                       <label
                         htmlFor="new-topic-custom-color"
-                        className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:bg-muted/50"
+                        className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer shadow-sm bg-[conic-gradient(at_50%_50%,_hsl(0_100%_50%),_hsl(60_100%_50%),_hsl(120_100%_45%),_hsl(180_100%_50%),_hsl(240_100%_60%),_hsl(300_100%_50%),_hsl(360_100%_50%))] hover:opacity-90"
                         title="Custom color"
                       >
-                        <Plus className="w-4 h-4 text-muted-foreground" />
+                        <Plus className="w-4 h-4 text-white" />
                       </label>
                       <input
                         id="new-topic-custom-color"
@@ -255,10 +255,10 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                     <div className="flex items-center gap-2">
                       <label
                         htmlFor="edit-topic-custom-color"
-                        className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer hover:bg-muted/50"
+                        className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center cursor-pointer shadow-sm bg-[conic-gradient(at_50%_50%,_hsl(0_100%_50%),_hsl(60_100%_50%),_hsl(120_100%_45%),_hsl(180_100%_50%),_hsl(240_100%_60%),_hsl(300_100%_50%),_hsl(360_100%_50%))] hover:opacity-90"
                         title="Custom color"
                       >
-                        <Plus className="w-4 h-4 text-muted-foreground" />
+                        <Plus className="w-4 h-4 text-white" />
                       </label>
                       <input
                         id="edit-topic-custom-color"
