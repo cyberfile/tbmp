@@ -59,6 +59,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-purple",
     dayIndex: 0,
+    priority: "medium",
   },
   {
     id: "2",
@@ -70,6 +71,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-orange",
     dayIndex: 1,
+    priority: "high",
   },
   {
     id: "3",
@@ -81,6 +83,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-green",
     dayIndex: 2,
+    priority: "low",
   },
   {
     id: "4",
@@ -92,6 +95,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-purple",
     dayIndex: 3,
+    priority: "medium",
   },
   {
     id: "5",
@@ -103,6 +107,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-blue",
     dayIndex: 4,
+    priority: "medium",
   },
 ];
 
@@ -155,35 +160,59 @@ export function StudyPlanner() {
     });
   };
 
-const handleTopicsChange = (updatedTopics: Topic[]) => {
-  setTopics((prevTopics) => {
-    const prevById: Record<string, Topic> = {};
-    prevTopics.forEach((t) => (prevById[t.id] = t));
-    const renameMap: Record<string, string> = {};
-    updatedTopics.forEach((t) => {
-      const prev = prevById[t.id];
-      if (prev && prev.name !== t.name) {
-        renameMap[prev.name] = t.name;
+  const handleTopicsChange = (updatedTopics: Topic[]) => {
+    setTopics((prevTopics) => {
+      const prevById: Record<string, Topic> = {};
+      prevTopics.forEach((t) => (prevById[t.id] = t));
+      const renameMap: Record<string, string> = {};
+      const priorityChangeByName: Record<string, TopicPriority | undefined> = {};
+      updatedTopics.forEach((t) => {
+        const prev = prevById[t.id];
+        if (prev) {
+          if (prev.name !== t.name) {
+            renameMap[prev.name] = t.name;
+          }
+          if (prev.priority !== t.priority) {
+            priorityChangeByName[t.name] = t.priority;
+          }
+        }
+      });
+
+      if (Object.keys(renameMap).length || Object.keys(priorityChangeByName).length) {
+        setTasks((prevTasks) => prevTasks.map((task) => {
+          // Apply topic rename first if any
+          const newName = renameMap[task.topic];
+          const topicNameAfterRename = newName ? newName : task.topic;
+
+          // Apply priority sync if the topic has a new priority defined
+          const newPriority = priorityChangeByName[topicNameAfterRename];
+          if (newName || newPriority) {
+            return {
+              ...task,
+              topic: topicNameAfterRename,
+              ...(newPriority ? { priority: newPriority } : {}),
+            };
+          }
+          return task;
+        }));
       }
+      return updatedTopics;
     });
-    if (Object.keys(renameMap).length) {
-      setTasks((prevTasks) => prevTasks.map((task) => {
-        const newName = renameMap[task.topic];
-        return newName ? { ...task, topic: newName } : task;
-      }));
-    }
-    return updatedTopics;
-  });
-};
+  };
 
-const handleTopicPriorityChange = (topicId: string, priority: TopicPriority) => {
-  setTopics((prev) => prev.map((t) => (t.id === topicId ? { ...t, priority } : t)));
-};
+  const handleTopicPriorityChange = (topicId: string, priority: TopicPriority) => {
+    setTopics((prev) => prev.map((t) => (t.id === topicId ? { ...t, priority } : t)));
+    setTasks((prev) => prev.map((task) => {
+      const topic = topics.find((t) => t.id === topicId);
+      if (!topic) return task;
+      return task.topic === topic.name ? { ...task, priority } : task;
+    }));
+  };
 
-const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
-const filteredTasks = selectedTopic === "All" 
-  ? tasksForDay 
-  : tasksForDay.filter(task => task.topic === selectedTopic);
+  const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
+  const filteredTasks = selectedTopic === "All" 
+    ? tasksForDay 
+    : tasksForDay.filter(task => task.topic === selectedTopic);
 
   const handleTaskClick = (task: Task) => {
     console.log("Task clicked:", task); // Debug log
@@ -191,55 +220,55 @@ const filteredTasks = selectedTopic === "All"
     setShowNoteUpload(true);
   };
 
-const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
-  const task: Task = {
-    ...newTask,
-    id: Date.now().toString(),
-    completed: false,
-    dayIndex: newTask.dayIndex ?? selectedDay,
+  const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
+    const task: Task = {
+      ...newTask,
+      id: Date.now().toString(),
+      completed: false,
+      dayIndex: newTask.dayIndex ?? selectedDay,
+    };
+    setTasks((prev) => {
+      const next = [...prev, task];
+      setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+      return next;
+    });
   };
-  setTasks((prev) => {
-    const next = [...prev, task];
-    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
-    return next;
-  });
-};
 
   const handleUpdateGoals = (daily: number, weekly: number) => {
     setTotalHoursGoal(daily);
     setWeeklyGoal(weekly);
   };
 
-const handleTasksReorder = (reorderedTasks: Task[]) => {
-  setTasks(() => {
-    setTopics((prevTopics) => computeTopicsProgress(reorderedTasks, prevTopics));
-    return reorderedTasks;
-  });
-};
+  const handleTasksReorder = (reorderedTasks: Task[]) => {
+    setTasks(() => {
+      setTopics((prevTopics) => computeTopicsProgress(reorderedTasks, prevTopics));
+      return reorderedTasks;
+    });
+  };
 
-const handleTaskDayChange = (taskId: string, dayIndex: number) => {
-  setTasks((prev) => {
-    const next = prev.map(t => t.id === taskId ? { ...t, dayIndex } : t);
-    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
-    return next;
-  });
-};
+  const handleTaskDayChange = (taskId: string, dayIndex: number) => {
+    setTasks((prev) => {
+      const next = prev.map(t => t.id === taskId ? { ...t, dayIndex } : t);
+      setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+      return next;
+    });
+  };
 
-const handleUpdateTask = (updatedTask: Task) => {
-  setTasks((prev) => {
-    const next = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
-    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
-    return next;
-  });
-};
+  const handleUpdateTask = (updatedTask: Task) => {
+    setTasks((prev) => {
+      const next = prev.map(t => t.id === updatedTask.id ? updatedTask : t);
+      setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+      return next;
+    });
+  };
 
-const handleTaskPriorityChange = (taskId: string, priority: TopicPriority) => {
-  setTasks((prev) => {
-    const next = prev.map(t => t.id === taskId ? { ...t, priority } : t);
-    setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
-    return next;
-  });
-};
+  const handleTaskPriorityChange = (taskId: string, priority: TopicPriority) => {
+    setTasks((prev) => {
+      const next = prev.map(t => t.id === taskId ? { ...t, priority } : t);
+      setTopics((prevTopics) => computeTopicsProgress(next, prevTopics));
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -382,44 +411,44 @@ const handleTaskPriorityChange = (taskId: string, priority: TopicPriority) => {
                     </TabsList>
                   </div>
 
-<TabsContent value="daily" className="space-y-6 mt-0">
-  <div className="flex items-center gap-2 flex-wrap mb-2">
-    {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
-      <Button
-        key={i}
-        size="sm"
-        variant={selectedDay === i ? 'default' : 'outline'}
-        className={selectedDay === i ? 'bg-study-blue text-white' : ''}
-        onClick={() => setSelectedDay(i)}
-      >
-        {d}
-      </Button>
-    ))}
-  </div>
-  <TaskList 
-    tasks={filteredTasks}
-    topics={topics}
-    selectedTopic={selectedTopic}
-    onTopicChange={setSelectedTopic}
-    onTaskToggle={toggleTaskCompletion}
-    onTaskClick={handleTaskClick}
-    onAddTask={() => setShowAddTask(true)}
-    onTopicPriorityChange={handleTopicPriorityChange}
-    onTaskPriorityChange={handleTaskPriorityChange}
-  />
-</TabsContent>
+                  <TabsContent value="daily" className="space-y-6 mt-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
+                        <Button
+                          key={i}
+                          size="sm"
+                          variant={selectedDay === i ? 'default' : 'outline'}
+                          className={selectedDay === i ? 'bg-study-blue text-white' : ''}
+                          onClick={() => setSelectedDay(i)}
+                        >
+                          {d}
+                        </Button>
+                      ))}
+                    </div>
+                    <TaskList 
+                      tasks={filteredTasks}
+                      topics={topics}
+                      selectedTopic={selectedTopic}
+                      onTopicChange={setSelectedTopic}
+                      onTaskToggle={toggleTaskCompletion}
+                      onTaskClick={handleTaskClick}
+                      onAddTask={() => setShowAddTask(true)}
+                      onTopicPriorityChange={handleTopicPriorityChange}
+                      onTaskPriorityChange={handleTaskPriorityChange}
+                    />
+                  </TabsContent>
 
-<TabsContent value="weekly" className="space-y-6 mt-0">
-  <WeeklyView 
-    tasks={tasks} 
-    topics={topics} 
-    onTaskClick={handleTaskClick}
-    onAddTask={() => setShowAddTask(true)}
-    onTasksReorder={handleTasksReorder}
-    onTaskDayChange={handleTaskDayChange}
-    onTaskPriorityChange={handleTaskPriorityChange}
-  />
-</TabsContent>
+                  <TabsContent value="weekly" className="space-y-6 mt-0">
+                    <WeeklyView 
+                      tasks={tasks} 
+                      topics={topics} 
+                      onTaskClick={handleTaskClick}
+                      onAddTask={() => setShowAddTask(true)}
+                      onTasksReorder={handleTasksReorder}
+                      onTaskDayChange={handleTaskDayChange}
+                      onTaskPriorityChange={handleTaskPriorityChange}
+                    />
+                  </TabsContent>
                 </Tabs>
               </div>
             </Card>
@@ -469,13 +498,13 @@ const handleTaskPriorityChange = (taskId: string, priority: TopicPriority) => {
       )}
 
       {/* Add Task Modal */}
-<AddTaskModal
-  isOpen={showAddTask}
-  onClose={() => setShowAddTask(false)}
-  onAddTask={handleAddTask}
-  topics={topics}
-  defaultDayIndex={selectedDay}
-/>
+      <AddTaskModal
+        isOpen={showAddTask}
+        onClose={() => setShowAddTask(false)}
+        onAddTask={handleAddTask}
+        topics={topics}
+        defaultDayIndex={selectedDay}
+      />
 
       {/* Edit Goals Modal */}
       <EditGoalsModal

@@ -20,6 +20,8 @@ export function TopicPriorityLabel({ priority, onChange, size = "sm" }: TopicPri
   const [open, setOpen] = useState(false);
   const current = labelMap[priority];
 
+  const isInteractive = Boolean(onChange);
+
   const badge = (
     <Badge
       variant="secondary"
@@ -30,7 +32,10 @@ export function TopicPriorityLabel({ priority, onChange, size = "sm" }: TopicPri
         color: `hsl(var(${current.varName}))`,
         borderColor: `hsl(var(${current.varName}) / 0.3)`,
       }}
-      onClick={(e) => { e.stopPropagation(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (isInteractive) setOpen(true);
+      }}
       onMouseDown={(e) => { e.stopPropagation(); }}
       onPointerDown={(e) => { e.stopPropagation(); }}
     >
@@ -52,6 +57,7 @@ export function TopicPriorityLabel({ priority, onChange, size = "sm" }: TopicPri
             <Badge
               key={p}
               role="button"
+              title={labelMap[p].title}
               className={`text-[11px] px-2.5 py-0.5 cursor-pointer border font-bold rounded-full ${p === priority ? "ring-2 ring-ring" : ""}`}
               style={{
                 backgroundColor: `hsl(var(${labelMap[p].varName}) / 0.3)`,

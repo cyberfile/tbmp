@@ -93,6 +93,8 @@ function SortableTask({ task, onTaskClick, onPriorityChange }: SortableTaskProps
     transition,
   };
 
+  const priorityTitle = `${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`;
+
   return (
     <div 
       ref={setNodeRef}
@@ -117,11 +119,13 @@ function SortableTask({ task, onTaskClick, onPriorityChange }: SortableTaskProps
             >
               {task.topic}
             </Badge>
-            <TopicPriorityLabel 
-              priority={task.priority ?? 'medium'} 
-              onChange={(p) => onPriorityChange?.(task.id, p)} 
-              size="sm"
-            />
+            <div title={priorityTitle}>
+              <TopicPriorityLabel 
+                priority={task.priority ?? 'medium'} 
+                onChange={(p) => onPriorityChange?.(task.id, p)} 
+                size="sm"
+              />
+            </div>
             <span className="text-xs text-muted-foreground">
               {to12h(task.startTime)} - {to12h(task.endTime)}
             </span>
@@ -166,17 +170,17 @@ export function WeeklyView({ tasks, topics, onTaskClick, onAddTask, onTasksReord
     return map;
   }, [tasks]);
 
-const [columns, setColumns] = useState<Record<number, string[]>>(() => {
-  const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
-  tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
-  return cols;
-});
+  const [columns, setColumns] = useState<Record<number, string[]>>(() => {
+    const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+    tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
+    return cols;
+  });
 
-useEffect(() => {
-  const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
-  tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
-  setColumns(cols);
-}, [tasks]);
+  useEffect(() => {
+    const cols: Record<number, string[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+    tasks.forEach((t) => { const d = t.dayIndex ?? 0; cols[d].push(t.id); });
+    setColumns(cols);
+  }, [tasks]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;

@@ -116,11 +116,13 @@ export function StudyStats({
                     />
                     <span className="font-medium">{topic.name}</span>
                     {onTopicPriorityChange && (
-                      <TopicPriorityLabel 
-                        priority={topic.priority ?? 'medium'} 
-                        onChange={(p) => onTopicPriorityChange(topic.id, p)}
-                        size="sm"
-                      />
+                      <div title={`${(topic.priority ?? 'medium').charAt(0).toUpperCase()}${(topic.priority ?? 'medium').slice(1)} priority`}>
+                        <TopicPriorityLabel 
+                          priority={topic.priority ?? 'medium'} 
+                          onChange={(p) => onTopicPriorityChange(topic.id, p)}
+                          size="sm"
+                        />
+                      </div>
                     )}
                   </div>
                   <Badge variant="secondary" className="bg-muted text-muted-foreground">

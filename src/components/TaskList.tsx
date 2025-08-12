@@ -98,6 +98,8 @@ function SortableTaskItem({ task, onToggle, onClick, onPriorityChange }: Sortabl
     transition,
   };
 
+  const priorityTitle = `${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`;
+
   return (
       <Card 
         ref={setNodeRef}
@@ -141,11 +143,13 @@ function SortableTaskItem({ task, onToggle, onClick, onPriorityChange }: Sortabl
                 >
                   {task.topic}
                 </Badge>
-                <TopicPriorityLabel 
-                  priority={task.priority ?? 'medium'} 
-                  onChange={(p) => onPriorityChange?.(task.id, p)} 
-                  size="sm"
-                />
+                <div title={priorityTitle}>
+                  <TopicPriorityLabel 
+                    priority={task.priority ?? 'medium'} 
+                    onChange={(p) => onPriorityChange?.(task.id, p)} 
+                    size="sm"
+                  />
+                </div>
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {to12h(task.startTime)} - {to12h(task.endTime)}
