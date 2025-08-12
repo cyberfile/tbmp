@@ -54,6 +54,11 @@
     --study-indigo: 226 70% 55%;
     --study-indigo-light: 226 70% 95%;
 
+    /* Priority tokens */
+    --priority-high: var(--study-red);
+    --priority-medium: var(--study-yellow);
+    --priority-low: var(--study-green);
+
     /* Progress Colors */
     --progress-bg: 210 40% 96%;
     --progress-green: 142 76% 36%;
