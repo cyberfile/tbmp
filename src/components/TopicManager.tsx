@@ -218,7 +218,11 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                       <span>Progress</span>
                       <span>{topic.progress}%</span>
                     </div>
-                    <Progress value={topic.progress} className="h-2 [&>div]:bg-[var(--bar-color)]" style={{ ['--bar-color' as any]: resolveColor(topic.color) }} />
+                    <Progress 
+                      value={topic.progress} 
+                      className="h-2 [&>div]:bg-[var(--bar-color)]" 
+                      style={{ '--bar-color': resolveColor(topic.color) } as React.CSSProperties} 
+                    />
                   </div>
                 </div>
               </Card>

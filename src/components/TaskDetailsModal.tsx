@@ -91,7 +91,7 @@ useEffect(() => {
         setPriority(t.priority);
       }
     }
-  }, [selectedTopicName, topics]);
+  }, [selectedTopicName, topics, color]);
 
   const selectedTopic = useMemo(() => topics.find(t => t.name === selectedTopicName), [topics, selectedTopicName]);
 
