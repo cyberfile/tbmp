@@ -33,6 +33,7 @@ interface Task {
   completed: boolean;
   color: string;
   reminderMinutesBefore?: number;
+  dayIndex?: number;
 }
 
 interface Topic {
@@ -214,7 +215,7 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
             </div>
 
             {/* Footer */}
-            <div className="mt-8 pt-4 border-t text-center text-sm text-gray-500">
+            <div className="mt-8 pt-4 border-t text-center text-sm text-gray-500 no-print">
             Generated on {new Date().toLocaleDateString()} | Study AI Tool
           </div>
         </div>
