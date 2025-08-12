@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Printer, Download, X } from "lucide-react";
+import { Printer, X } from "lucide-react";
 import { useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import type { TopicPriority } from "./TopicPriorityLabel";
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
   const v = c.trim();
@@ -35,7 +36,7 @@ interface Task {
   color: string;
   reminderMinutesBefore?: number;
   dayIndex?: number;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: TopicPriority;
 }
 
 interface Topic {
@@ -43,6 +44,7 @@ interface Topic {
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 interface PrintableViewProps {
@@ -59,38 +61,6 @@ export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }
     window.print();
   };
 
-  const handleDownload = async () => {
-    const node = document.getElementById('printable-content');
-    if (!node) return;
-
-    const canvas = await html2canvas(node, { scale: 2, backgroundColor: "#ffffff" });
-    const imgData = canvas.toDataURL('image/png');
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    } else {
-      let heightLeft = imgHeight;
-      let position = 0;
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft * -1;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-    }
-
-    pdf.save(`study-plan-${viewType}.pdf`);
-  };
 
   const getTasksGroupedByDay = () => {
     const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -107,16 +77,42 @@ export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <style>
         {`
-          @page { size: A4 portrait; margin: 10mm; }
-          @media print {
-            html, body { padding: 0; margin: 0; }
-            body * { visibility: hidden; }
-            #printable-content, #printable-content * { visibility: visible; }
-            #printable-content { position: static; width: 100%; font-size: 12px; }
-            .no-print { display: none !important; }
-            .day-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .day-card { break-inside: avoid; page-break-inside: avoid; }
-            .notes-area { break-inside: avoid; page-break-inside: avoid; }
+          @page { size: A4 portrait; margin: 15mm; }
+            @media print {
+              html, body { padding: 0; margin: 0; }
+              body * { visibility: hidden; }
+              #printable-content, #printable-content * { visibility: visible; }
+              #printable-content { position: static; width: 100%; font-size: 12px; line-height: 1.4; }
+              .no-print { display: none !important; }
+              .day-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+              .day-card { break-inside: avoid; page-break-inside: avoid; margin-bottom: 8px; }
+              .notes-area { break-inside: avoid; page-break-inside: avoid; margin-top: 16px; }
+              .task-item { margin-bottom: 6px; }
+              .legend-section { margin-bottom: 16px; }
+              .priority-label { 
+                display: inline-flex !important; 
+                align-items: center !important;
+                justify-content: center !important;
+                min-width: 20px !important;
+                height: 18px !important;
+                padding: 2px 6px !important;
+                font-size: 9px !important;
+                line-height: 1 !important;
+                white-space: nowrap !important;
+              }
+              .topic-label {
+                display: inline-block !important;
+                padding: 2px 6px !important;
+                font-size: 9px !important;
+                line-height: 1.2 !important;
+                white-space: nowrap !important;
+                min-height: 16px !important;
+              }
+            }
+          #printable-content { 
+            padding: 16px; 
+            max-width: none;
+            background: white;
           }
         `}
       </style>
@@ -131,10 +127,6 @@ export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }
               <Printer className="w-4 h-4" />
               Print
             </Button>
-            <Button onClick={handleDownload} variant="outline" className="gap-2">
-              <Download className="w-4 h-4" />
-              Download
-            </Button>
             <Button onClick={onClose} variant="ghost" size="sm">
               <X className="w-4 h-4" />
             </Button>
@@ -142,7 +134,7 @@ export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }
         </div>
 
         {/* Printable Content */}
-        <div id="printable-content" className="p-6">
+        <div id="printable-content" className="p-6 bg-white">
           <div className="flex items-start justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold">{plannerTitle}</h1>
@@ -154,9 +146,9 @@ export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }
           </div>
 
           {/* Topics Legend */}
-          <div className="mb-6">
+          <div className="mb-6 legend-section">
             <h3 className="font-semibold mb-3">Topics:</h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {topics.map((topic) => (
                 <div key={topic.id} className="flex items-center gap-2 mr-4 mb-2">
                   <div 
@@ -176,19 +168,25 @@ export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }
                     <div key={day} className="day-card border rounded p-2">
                       <h3 className="text-sm font-semibold border-b pb-1 mb-2">{day}</h3>
                       {dayTasks.length > 0 ? (
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {dayTasks.map((task) => (
-                            <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
-                              <div className="font-medium text-sm break-words">{task.title}</div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                            <div key={task.id} className="task-item p-3 bg-white rounded border shadow-sm" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
+                              <div className="font-medium text-sm break-words mb-1">{task.title}</div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="topic-label inline-block text-[10px] px-2 py-1 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
                                 <span
-                                  className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
+                                  className="priority-label inline-flex items-center text-[10px] px-2 py-1 border rounded font-bold"
                                   title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
                                   style={{
-                                    backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
-                                    color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
-                                    borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                    backgroundColor: task.priority === 'high' ? 'hsl(0 84% 60% / 0.2)' : 
+                                                    task.priority === 'low' ? 'hsl(142 71% 45% / 0.2)' : 
+                                                    'hsl(45 100% 51% / 0.2)',
+                                    color: task.priority === 'high' ? 'hsl(0 84% 40%)' : 
+                                          task.priority === 'low' ? 'hsl(142 71% 30%)' : 
+                                          'hsl(45 100% 35%)',
+                                    borderColor: task.priority === 'high' ? 'hsl(0 84% 60% / 0.3)' : 
+                                                task.priority === 'low' ? 'hsl(142 71% 45% / 0.3)' : 
+                                                'hsl(45 100% 51% / 0.3)',
                                   }}
                                 >
                                   {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}
@@ -211,19 +209,25 @@ export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }
                     <div key={day} className="day-card border rounded p-2">
                       <h3 className="text-sm font-semibold border-b pb-1 mb-2">{day}</h3>
                       {dayTasks.length > 0 ? (
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                         {dayTasks.map((task) => (
-                          <div key={task.id} className="p-2 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
-                            <div className="font-medium text-sm break-words">{task.title}</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                          <div key={task.id} className="task-item p-3 bg-white rounded border shadow-sm" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
+                            <div className="font-medium text-sm break-words mb-1">{task.title}</div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="topic-label inline-block text-[10px] px-2 py-1 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
                               <span
-                                className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
+                                className="priority-label inline-flex items-center text-[10px] px-2 py-1 border rounded font-bold"
                                 title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
                                 style={{
-                                  backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
-                                  color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
-                                  borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                                  backgroundColor: task.priority === 'high' ? 'hsl(0 84% 60% / 0.2)' : 
+                                                  task.priority === 'low' ? 'hsl(142 71% 45% / 0.2)' : 
+                                                  'hsl(45 100% 51% / 0.2)',
+                                  color: task.priority === 'high' ? 'hsl(0 84% 40%)' : 
+                                        task.priority === 'low' ? 'hsl(142 71% 30%)' : 
+                                        'hsl(45 100% 35%)',
+                                  borderColor: task.priority === 'high' ? 'hsl(0 84% 60% / 0.3)' : 
+                                              task.priority === 'low' ? 'hsl(142 71% 45% / 0.3)' : 
+                                              'hsl(45 100% 51% / 0.3)',
                                 }}
                               >
                                 {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}
@@ -248,20 +252,26 @@ export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }
           {viewType === "monthly" && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">All Tasks</h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {tasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-white rounded border" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
+                  <div key={task.id} className="task-item p-4 bg-white rounded border shadow-sm" style={{ borderLeft: '4px solid', borderLeftColor: resolveColor(task.color) }}>
                     <div>
-                      <div className="font-medium">{task.title}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
+                      <div className="font-medium mb-2">{task.title}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="topic-label inline-block text-[10px] px-2 py-1 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
                         <span
-                          className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
+                          className="priority-label inline-flex items-center text-[10px] px-2 py-1 border rounded font-bold"
                           title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
                           style={{
-                            backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
-                            color: `hsl(var(--priority-${task.priority ?? 'medium'}))`,
-                            borderColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
+                            backgroundColor: task.priority === 'high' ? 'hsl(0 84% 60% / 0.2)' : 
+                                            task.priority === 'low' ? 'hsl(142 71% 45% / 0.2)' : 
+                                            'hsl(45 100% 51% / 0.2)',
+                            color: task.priority === 'high' ? 'hsl(0 84% 40%)' : 
+                                  task.priority === 'low' ? 'hsl(142 71% 30%)' : 
+                                  'hsl(45 100% 35%)',
+                            borderColor: task.priority === 'high' ? 'hsl(0 84% 60% / 0.3)' : 
+                                        task.priority === 'low' ? 'hsl(142 71% 45% / 0.3)' : 
+                                        'hsl(45 100% 51% / 0.3)',
                           }}
                         >
                           {'!'.repeat(task.priority === 'high' ? 3 : task.priority === 'low' ? 1 : 2)}

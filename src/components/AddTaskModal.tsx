@@ -50,13 +50,13 @@ export function AddTaskModal({ isOpen, onClose, onAddTask, topics, defaultDayInd
   const [endTime, setEndTime] = useState("");
   const [color, setColor] = useState<string>("");
 const [dayIndex, setDayIndex] = useState<number>(defaultDayIndex ?? 0);
-const [priority, setPriority] = useState<TopicPriority>('medium');
+const [priority, setPriority] = useState<TopicPriority>('none');
 
   useEffect(() => {
     const t = topics.find((tt) => tt.name === selectedTopic);
     if (t) {
       setColor(t.color);
-      setPriority(t.priority ?? 'medium');
+      setPriority(t.priority ?? 'none');
     }
   }, [selectedTopic, topics]);
 

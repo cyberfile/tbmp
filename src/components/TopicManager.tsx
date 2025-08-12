@@ -47,7 +47,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [newTopicName, setNewTopicName] = useState("");
   const [selectedColor, setSelectedColor] = useState(availableColors[0].value);
-  const [newTopicPriority, setNewTopicPriority] = useState<TopicPriority>('medium');
+  const [newTopicPriority, setNewTopicPriority] = useState<TopicPriority>('none');
   const [isAddingTopic, setIsAddingTopic] = useState(false);
   const { toast } = useToast();
 
@@ -65,7 +65,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
     onTopicsChange([...topics, newTopic]);
     setNewTopicName("");
     setSelectedColor(availableColors[0].value);
-    setNewTopicPriority('medium');
+    setNewTopicPriority('none');
     setIsAddingTopic(false);
     
     toast({
@@ -285,7 +285,7 @@ export function TopicManager({ topics, onTopicsChange, onClose }: TopicManagerPr
                 <div className="space-y-2">
                   <span className="text-sm font-medium">Priority:</span>
                   <TopicPriorityLabel 
-                    priority={editingTopic.priority ?? 'medium'} 
+                    priority={editingTopic.priority ?? 'none'} 
                     onChange={(p) => setEditingTopic({ ...editingTopic, priority: p })}
                   />
                 </div>

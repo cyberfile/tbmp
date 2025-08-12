@@ -16,6 +16,7 @@ import { PrintableView } from "./PrintableView";
 import { TaskDetailsModal } from "./TaskDetailsModal";
 import { AddTaskModal } from "./AddTaskModal";
 import { EditGoalsModal } from "./EditGoalsModal";
+import { Link } from "react-router-dom";
 import type { TopicPriority } from "./TopicPriorityLabel";
 
 interface Topic {
@@ -45,7 +46,7 @@ const initialTopics: Topic[] = [
   { id: "1", name: "Topic 1", color: "study-purple", progress: 75, priority: "medium" },
   { id: "2", name: "Topic 2", color: "study-orange", progress: 60, priority: "high" },
   { id: "3", name: "Topic 3", color: "study-green", progress: 40, priority: "low" },
-  { id: "4", name: "Topic 4", color: "study-blue", progress: 20, priority: "medium" },
+  { id: "4", name: "Topic 4", color: "study-blue", progress: 20, priority: "none" },
 ];
 
 const initialTasks: Task[] = [
@@ -95,7 +96,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-purple",
     dayIndex: 3,
-    priority: "medium",
+    priority: "none",
   },
   {
     id: "5",
@@ -107,7 +108,7 @@ const initialTasks: Task[] = [
     completed: false,
     color: "study-blue",
     dayIndex: 4,
-    priority: "medium",
+    priority: "none",
   },
 ];
 
@@ -116,6 +117,7 @@ export function StudyPlanner() {
   const [topics, setTopics] = useState<Topic[]>(initialTopics);
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTopic, setSelectedTopic] = useState("All");
+  const [selectedPriority, setSelectedPriority] = useState<TopicPriority | "All">("All");
   const [showTopicManager, setShowTopicManager] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showPrintView, setShowPrintView] = useState(false);
@@ -213,9 +215,12 @@ export function StudyPlanner() {
   };
 
   const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
-  const filteredTasks = selectedTopic === "All" 
+  const topicFiltered = selectedTopic === "All" 
     ? tasksForDay 
     : tasksForDay.filter(task => task.topic === selectedTopic);
+  const filteredTasks = selectedPriority === "All"
+    ? topicFiltered
+    : topicFiltered.filter(task => (task.priority ?? "none") === selectedPriority);
 
   // Compute study time from task durations (in hours)
   const timeToMinutes = (t: string) => {
@@ -312,6 +317,9 @@ export function StudyPlanner() {
                 </Button>
                 <Button variant="ghost" className="text-foreground font-medium">
                   Study Tools
+                </Button>
+                <Button variant="ghost" asChild className="text-muted-foreground hover:text-foreground">
+                  <Link to="/public-library">Public Library</Link>
                 </Button>
               </nav>
             </div>
@@ -455,6 +463,8 @@ export function StudyPlanner() {
                       topics={topics}
                       selectedTopic={selectedTopic}
                       onTopicChange={setSelectedTopic}
+                      selectedPriority={selectedPriority}
+                      onPriorityChange={setSelectedPriority}
                       onTaskToggle={toggleTaskCompletion}
                       onTaskClick={handleTaskClick}
                       onAddTask={() => setShowAddTask(true)}

@@ -22,6 +22,7 @@ export interface Topic {
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 export interface Task {
@@ -62,7 +63,7 @@ export function TaskDetailsModal({ isOpen, task, topics, onClose, onUpdateTask }
   const [endTime, setEndTime] = useState(task.endTime);
   const [details, setDetails] = useState(task.details || "");
 const [color, setColor] = useState<string>(task.color);
-const [priority, setPriority] = useState<TopicPriority>(task.priority ?? 'medium');
+const [priority, setPriority] = useState<TopicPriority>(task.priority ?? 'none');
 
   // Notes & Files state (local, ephemeral for now)
   const [notes, setNotes] = useState<Note[]>([]);
@@ -76,7 +77,7 @@ useEffect(() => {
   setEndTime(task.endTime);
   setDetails(task.details || "");
   setColor(task.color);
-  setPriority(task.priority ?? 'medium');
+  setPriority(task.priority ?? 'none');
 }, [task]);
 
   useEffect(() => {
@@ -245,6 +246,34 @@ const updated: Task = {
                 </div>
               </div>
             </div>
+
+            {/* Note Actions */}
+            <Card className="p-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">Study Tools</h3>
+                  <Badge variant="outline" className="text-xs">AI-Powered</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <FileText className="w-4 h-4" />
+                    Create Flashcards
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <FileText className="w-4 h-4" />
+                    Create Mindmap
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <FileText className="w-4 h-4" />
+                    Practice Test
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <FileText className="w-4 h-4" />
+                    Study Guide
+                  </Button>
+                </div>
+              </div>
+            </Card>
 
             {/* Add New Note */}
             <Card className="p-4">

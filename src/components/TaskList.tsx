@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   DndContext, 
   closestCenter,
@@ -22,7 +23,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Calendar, Clock, Plus } from "lucide-react";
+import { GripVertical, Calendar, Clock, Plus, ChevronDown, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TopicPriorityLabel, type TopicPriority } from "./TopicPriorityLabel";
 
@@ -69,6 +70,8 @@ interface TaskListProps {
   topics: Topic[];
   selectedTopic: string;
   onTopicChange: (topic: string) => void;
+  selectedPriority: TopicPriority | "All";
+  onPriorityChange: (priority: TopicPriority | "All") => void;
   onTaskToggle: (taskId: string) => void;
   onTaskClick: (task: Task) => void;
   onAddTask?: () => void;
@@ -172,8 +175,16 @@ function SortableTaskItem({ task, onToggle, onClick, onPriorityChange }: Sortabl
   );
 }
 
-export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask, onTopicPriorityChange, onTaskPriorityChange }: TaskListProps) {
+export function TaskList({ tasks, topics, selectedTopic, onTopicChange, selectedPriority, onPriorityChange, onTaskToggle, onTaskClick, onAddTask, onTopicPriorityChange, onTaskPriorityChange }: TaskListProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
+  
+  const priorityOptions = [
+    { value: "All", label: "All Priorities", text: "All", varName: "--foreground" },
+    { value: "none", label: "No Priority", text: "-", varName: "--muted", hasOutline: true },
+    { value: "low", label: "Low Priority", text: "!", varName: "--priority-low" },
+    { value: "medium", label: "Medium Priority", text: "!!", varName: "--priority-medium" },
+    { value: "high", label: "High Priority", text: "!!!", varName: "--priority-high" },
+  ];
   
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -201,44 +212,89 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
 
   return (
     <div className="space-y-6">
-      {/* Subject Filter */}
-      <div className="flex items-center gap-3 flex-wrap p-4 bg-muted/30 rounded-xl">
-        <span className="text-sm font-semibold text-foreground">Filter by topic:</span>
-        <div className="flex gap-3 flex-wrap">
-          <Button
-            size="sm"
-            variant={selectedTopic === "All" ? "default" : "secondary"}
-            onClick={() => onTopicChange("All")}
-            className={selectedTopic === "All" ? "bg-study-blue hover:bg-study-blue/90" : ""}
-          >
-            All Topics
-          </Button>
-          {topics.map((topic) => (
-            <div key={topic.id} className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant={selectedTopic === topic.name ? "default" : "secondary"}
-                onClick={() => onTopicChange(topic.name)}
-                className={
-                  selectedTopic === topic.name
-                    ? "text-white shadow-sm"
-                    : "hover:bg-muted"
-                }
-                style={
-                  selectedTopic === topic.name 
-                    ? { backgroundColor: resolveColor(topic.color) }
-                    : undefined
-                }
-              >
-                <div 
-                  className="w-2 h-2 rounded-full mr-2"
-                  style={{ backgroundColor: resolveColor(topic.color) }}
-                />
-                <span className="break-words">{topic.name}</span>
-              </Button>
-            </div>
-          ))}
+      {/* Filters */}
+      <div className="flex items-center gap-4 flex-wrap p-4 bg-muted/30 rounded-xl">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-semibold text-foreground">Filters:</span>
         </div>
+        
+        {/* Topic Filter Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <div className="flex items-center gap-2">
+                {selectedTopic !== "All" && (
+                  <div 
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: resolveColor(topics.find(t => t.name === selectedTopic)?.color) }}
+                  />
+                )}
+                <span>{selectedTopic === "All" ? "All Topics" : selectedTopic}</span>
+              </div>
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="z-[9999] bg-background border shadow-lg">
+            <DropdownMenuItem onClick={() => onTopicChange("All")}>
+              <span>All Topics</span>
+            </DropdownMenuItem>
+            {topics.map((topic) => (
+              <DropdownMenuItem key={topic.id} onClick={() => onTopicChange(topic.name)}>
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: resolveColor(topic.color) }}
+                  />
+                  <span>{topic.name}</span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Priority Filter Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <div className="flex items-center gap-2">
+                {selectedPriority !== "All" && (
+                  <span 
+                    className="text-[11px] font-bold"
+                    style={{ 
+                      color: `hsl(var(${priorityOptions.find(p => p.value === selectedPriority)?.varName}))` 
+                    }}
+                  >
+                    {priorityOptions.find(p => p.value === selectedPriority)?.text}
+                  </span>
+                )}
+                <span>{priorityOptions.find(p => p.value === selectedPriority)?.label}</span>
+              </div>
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="z-[9999] bg-background border shadow-lg">
+            {priorityOptions.map((option) => (
+              <DropdownMenuItem key={option.value} onClick={() => onPriorityChange(option.value as TopicPriority | "All")}>
+                <div className="flex items-center gap-2">
+                  {option.value !== "All" && (
+                    <span 
+                      className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full border ${option.hasOutline ? "border-2 bg-transparent" : ""}`}
+                      style={{
+                        backgroundColor: option.hasOutline ? 'transparent' : `hsl(var(${option.varName}) / 0.3)`,
+                        color: `hsl(var(${option.varName}))`,
+                        borderColor: `hsl(var(${option.varName}) / ${option.hasOutline ? '0.8' : '0.3'})`,
+                      }}
+                    >
+                      {option.text}
+                    </span>
+                  )}
+                  <span>{option.label}</span>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Task List */}
