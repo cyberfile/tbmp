@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Save, Upload, Plus } from "lucide-react";
-
+import { TopicPriorityLabel, type TopicPriority } from "./TopicPriorityLabel";
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
   const v = c.trim();
