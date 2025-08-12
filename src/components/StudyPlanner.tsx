@@ -450,6 +450,7 @@ const handleTaskPriorityChange = (taskId: string, priority: TopicPriority) => {
           topics={topics}
           viewType={printViewType}
           onClose={() => setShowPrintView(false)}
+          plannerTitle={plannerTitle}
         />
       )}
 

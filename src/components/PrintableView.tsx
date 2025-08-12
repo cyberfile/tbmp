@@ -50,9 +50,10 @@ interface PrintableViewProps {
   topics: Topic[];
   viewType: "weekly" | "monthly";
   onClose: () => void;
+  plannerTitle: string;
 }
 
-export function PrintableView({ tasks, topics, viewType, onClose }: PrintableViewProps) {
+export function PrintableView({ tasks, topics, viewType, onClose, plannerTitle }: PrintableViewProps) {
   const [notes, setNotes] = useState("");
   const handlePrint = () => {
     window.print();
@@ -144,7 +145,7 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
         <div id="printable-content" className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold">Study Planner</h1>
+              <h1 className="text-2xl font-bold">{plannerTitle}</h1>
               <p className="text-sm text-muted-foreground">Topic-based learning schedule</p>
             </div>
             <div className="text-right text-sm text-muted-foreground">
@@ -182,7 +183,7 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
                                 <span
-                                  className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded"
+                                  className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
                                   title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
                                   style={{
                                     backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
@@ -217,7 +218,7 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
                             <div className="flex items-center gap-2 mt-1">
                               <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
                               <span
-                                className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded"
+                                className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
                                 title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
                                 style={{
                                   backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,
@@ -255,7 +256,7 @@ export function PrintableView({ tasks, topics, viewType, onClose }: PrintableVie
                       <div className="flex items-center gap-2 mt-1">
                         <span className="inline-block text-[10px] px-2 py-0.5 rounded border text-white" style={{ backgroundColor: resolveColor(task.color), borderColor: resolveColor(task.color) }}>{task.topic}</span>
                         <span
-                          className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded"
+                          className="inline-flex items-center text-[10px] px-2 py-0.5 border rounded font-bold"
                           title={`${(task.priority ?? 'medium').charAt(0).toUpperCase()}${(task.priority ?? 'medium').slice(1)} priority`}
                           style={{
                             backgroundColor: `hsl(var(--priority-${task.priority ?? 'medium'}) / 0.3)`,

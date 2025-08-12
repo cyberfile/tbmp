@@ -24,12 +24,15 @@ export function TopicPriorityLabel({ priority, onChange, size = "sm" }: TopicPri
     <Badge
       variant="secondary"
       title={current.title}
-      className={`${size === "sm" ? "text-[10px] px-2 py-0.5" : "text-xs px-2.5 py-1"} cursor-pointer border inline-flex items-center ml-1`}
+      className={`${size === "sm" ? "text-[11px] px-2.5 py-0.5" : "text-xs px-3 py-1"} font-bold cursor-pointer border inline-flex items-center ml-2 rounded-full`}
       style={{
         backgroundColor: `hsl(var(${current.varName}) / 0.3)`,
         color: `hsl(var(${current.varName}))`,
         borderColor: `hsl(var(${current.varName}) / 0.3)`,
       }}
+      onClick={(e) => { e.stopPropagation(); }}
+      onMouseDown={(e) => { e.stopPropagation(); }}
+      onPointerDown={(e) => { e.stopPropagation(); }}
     >
       {current.text}
     </Badge>
@@ -49,12 +52,14 @@ export function TopicPriorityLabel({ priority, onChange, size = "sm" }: TopicPri
             <Badge
               key={p}
               role="button"
-              className={`text-[10px] px-2 py-0.5 cursor-pointer border ${p === priority ? "ring-2 ring-ring" : ""}`}
+              className={`text-[11px] px-2.5 py-0.5 cursor-pointer border font-bold rounded-full ${p === priority ? "ring-2 ring-ring" : ""}`}
               style={{
                 backgroundColor: `hsl(var(${labelMap[p].varName}) / 0.3)`,
                 color: `hsl(var(${labelMap[p].varName}))`,
                 borderColor: `hsl(var(${labelMap[p].varName}) / 0.3)`,
               }}
+              onMouseDown={(e) => { e.stopPropagation(); }}
+              onPointerDown={(e) => { e.stopPropagation(); }}
               onClick={(e) => {
                 e.stopPropagation();
                 onChange(p);
