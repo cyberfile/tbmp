@@ -261,13 +261,13 @@ useEffect(() => {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {daysOfWeek.map((day, index) => {
               const dayTasks = getTasksForDay(index);
               
               return (
-                <div key={day} className="space-y-3">
-                  <div className="font-medium text-sm text-center py-2 bg-secondary rounded-md">
+                <div key={day} className="space-y-3 break-words">
+                  <div className="font-medium text-sm text-left py-2 bg-secondary rounded-md px-2">
                     {day}
                   </div>
                   <DayColumn id={`day-${index}`}>

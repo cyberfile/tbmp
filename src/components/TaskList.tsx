@@ -24,6 +24,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Calendar, Clock, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TopicPriorityLabel, type TopicPriority } from "./TopicPriorityLabel";
 
 const resolveColor = (c?: string) => {
   if (!c) return undefined;
@@ -59,6 +60,7 @@ interface Topic {
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 interface TaskListProps {
@@ -69,6 +71,7 @@ interface TaskListProps {
   onTaskToggle: (taskId: string) => void;
   onTaskClick: (task: Task) => void;
   onAddTask?: () => void;
+  onTopicPriorityChange?: (topicId: string, priority: TopicPriority) => void;
 }
 
 interface SortableTaskItemProps {
@@ -157,7 +160,7 @@ function SortableTaskItem({ task, onToggle, onClick }: SortableTaskItemProps) {
   );
 }
 
-export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask }: TaskListProps) {
+export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskToggle, onTaskClick, onAddTask, onTopicPriorityChange }: TaskListProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks);
   
   const sensors = useSensors(
@@ -189,7 +192,7 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
       {/* Subject Filter */}
       <div className="flex items-center gap-3 flex-wrap p-4 bg-muted/30 rounded-xl">
         <span className="text-sm font-semibold text-foreground">Filter by topic:</span>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-3 flex-wrap">
           <Button
             size="sm"
             variant={selectedTopic === "All" ? "default" : "secondary"}
@@ -199,11 +202,11 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
             All Topics
           </Button>
           {topics.map((topic) => (
-            <Button
-              key={topic.id}
-              size="sm"
-              variant={selectedTopic === topic.name ? "default" : "secondary"}
-              onClick={() => onTopicChange(topic.name)}
+            <div key={topic.id} className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={selectedTopic === topic.name ? "default" : "secondary"}
+                onClick={() => onTopicChange(topic.name)}
                 className={
                   selectedTopic === topic.name
                     ? "text-white shadow-sm"
@@ -214,13 +217,21 @@ export function TaskList({ tasks, topics, selectedTopic, onTopicChange, onTaskTo
                     ? { backgroundColor: resolveColor(topic.color) }
                     : undefined
                 }
-            >
-              <div 
-                className="w-2 h-2 rounded-full mr-2"
-                style={{ backgroundColor: resolveColor(topic.color) }}
-              />
-              {topic.name}
-            </Button>
+              >
+                <div 
+                  className="w-2 h-2 rounded-full mr-2"
+                  style={{ backgroundColor: resolveColor(topic.color) }}
+                />
+                <span className="truncate max-w-[140px]">{topic.name}</span>
+              </Button>
+              {onTopicPriorityChange && (
+                <TopicPriorityLabel 
+                  priority={topic.priority ?? 'medium'} 
+                  onChange={(p) => onTopicPriorityChange(topic.id, p)}
+                  size="sm"
+                />
+              )}
+            </div>
           ))}
         </div>
       </div>

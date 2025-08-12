@@ -16,12 +16,14 @@ import { PrintableView } from "./PrintableView";
 import { TaskDetailsModal } from "./TaskDetailsModal";
 import { AddTaskModal } from "./AddTaskModal";
 import { EditGoalsModal } from "./EditGoalsModal";
+import type { TopicPriority } from "./TopicPriorityLabel";
 
 interface Topic {
   id: string;
   name: string;
   color: string;
   progress: number;
+  priority?: TopicPriority;
 }
 
 interface Task {
@@ -39,10 +41,10 @@ interface Task {
 }
 
 const initialTopics: Topic[] = [
-  { id: "1", name: "Topic 1", color: "study-purple", progress: 75 },
-  { id: "2", name: "Topic 2", color: "study-orange", progress: 60 },
-  { id: "3", name: "Topic 3", color: "study-green", progress: 40 },
-  { id: "4", name: "Topic 4", color: "study-blue", progress: 20 },
+  { id: "1", name: "Topic 1", color: "study-purple", progress: 75, priority: "medium" },
+  { id: "2", name: "Topic 2", color: "study-orange", progress: 60, priority: "high" },
+  { id: "3", name: "Topic 3", color: "study-green", progress: 40, priority: "low" },
+  { id: "4", name: "Topic 4", color: "study-blue", progress: 20, priority: "medium" },
 ];
 
 const initialTasks: Task[] = [
@@ -151,6 +153,31 @@ export function StudyPlanner() {
       return updated;
     });
   };
+
+const handleTopicsChange = (updatedTopics: Topic[]) => {
+  setTopics((prevTopics) => {
+    const prevById: Record<string, Topic> = {};
+    prevTopics.forEach((t) => (prevById[t.id] = t));
+    const renameMap: Record<string, string> = {};
+    updatedTopics.forEach((t) => {
+      const prev = prevById[t.id];
+      if (prev && prev.name !== t.name) {
+        renameMap[prev.name] = t.name;
+      }
+    });
+    if (Object.keys(renameMap).length) {
+      setTasks((prevTasks) => prevTasks.map((task) => {
+        const newName = renameMap[task.topic];
+        return newName ? { ...task, topic: newName } : task;
+      }));
+    }
+    return updatedTopics;
+  });
+};
+
+const handleTopicPriorityChange = (topicId: string, priority: TopicPriority) => {
+  setTopics((prev) => prev.map((t) => (t.id === topicId ? { ...t, priority } : t)));
+};
 
 const tasksForDay = tasks.filter(t => (t.dayIndex ?? 0) === selectedDay);
 const filteredTasks = selectedTopic === "All" 
@@ -346,19 +373,6 @@ const handleUpdateTask = (updatedTask: Task) => {
                   </div>
 
 <TabsContent value="daily" className="space-y-6 mt-0">
-  <div className="flex items-center gap-2 flex-wrap mb-2">
-    {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d, i) => (
-      <Button
-        key={d}
-        size="sm"
-        variant={selectedDay === i ? 'default' : 'secondary'}
-        onClick={() => setSelectedDay(i)}
-        className={selectedDay === i ? 'bg-study-blue hover:bg-study-blue/90' : ''}
-      >
-        {d}
-      </Button>
-    ))}
-  </div>
   <TaskList 
     tasks={filteredTasks}
     topics={topics}
@@ -367,6 +381,7 @@ const handleUpdateTask = (updatedTask: Task) => {
     onTaskToggle={toggleTaskCompletion}
     onTaskClick={handleTaskClick}
     onAddTask={() => setShowAddTask(true)}
+    onTopicPriorityChange={handleTopicPriorityChange}
   />
 </TabsContent>
 
