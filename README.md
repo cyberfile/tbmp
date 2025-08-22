@@ -16,12 +16,6 @@ A simple study planner and task management tool designed to help students stay o
 ---
 
 
-Clone the repo
-
-git clone https://github.com/cyberfile/tbmp.git
-cd tbmp
-
-
 ## Tech Stack
 
 - **React** – Frontend framework for building interactive UI  
