@@ -16,13 +16,13 @@ A simple study planner and task management tool designed to help students stay o
 ---
 
 
-### 1. Clone the repo
-```bash
+Clone the repo
+
 git clone https://github.com/cyberfile/tbmp.git
 cd tbmp
 
 
-### Tech Stack
+## Tech Stack
 
 - **React** – Frontend framework for building interactive UI  
 - **TypeScript** – Strongly typed JavaScript for safer code  
